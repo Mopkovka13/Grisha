@@ -1,0 +1,59 @@
+.page {
+  min-height: 100vh;
+  background: #fff;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.header {
+  margin-bottom: 40px;
+}
+
+.backButton {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 8px 0;
+  margin-bottom: 16px;
+  transition: color 0.2s;
+}
+
+.backButton:hover {
+  color: #000;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 32px;
+  color: #000;
+}
+
+.homeButton {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 8px;
+  transition: color 0.2s;
+}
+
+.homeButton:hover {
+  color: #000;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 30px 15px;
+  }
+
+  .header h1 {
+    font-size: 24px;
+  }
+}

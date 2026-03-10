@@ -1,5 +1,32 @@
-node_modules/
-dist/
-public/
 .DS_Store
 *.log
+
+# Node
+node_modules/
+frontend/node_modules/
+
+# Build outputs
+dist/
+frontend/dist/
+
+# Gradle
+.gradle/
+build/
+frontend/.gradle/
+backend/build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+
+# Backend
+backend/src/main/resources/static/
+data/
+/tmp/
+
+# Secrets
+.env

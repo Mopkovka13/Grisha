@@ -1,0 +1,16 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - grinya_data:/app/data
+      - grinya_media:/app/media
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+
+volumes:
+  grinya_data:
+  grinya_media:

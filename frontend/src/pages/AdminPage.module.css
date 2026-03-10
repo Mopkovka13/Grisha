@@ -1,0 +1,292 @@
+.loginPage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: #111;
+}
+
+.loginForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 300px;
+}
+
+.loginForm h2 {
+  color: #fff;
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.loginForm input {
+  padding: 10px 14px;
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 14px;
+  outline: none;
+}
+
+.loginForm input:focus {
+  border-color: #555;
+}
+
+.loginForm button {
+  padding: 10px;
+  background: #fff;
+  color: #111;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.loginForm button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.error {
+  color: #ff6b6b;
+  font-size: 13px;
+  margin: 0;
+}
+
+/* Admin panel */
+
+.adminPage {
+  min-height: 100vh;
+  background: #111;
+  color: #fff;
+  padding: 24px;
+}
+
+.adminHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.adminHeader h1 {
+  font-size: 20px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.logoutBtn {
+  background: none;
+  border: 1px solid #444;
+  color: #aaa;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.logoutBtn:hover {
+  border-color: #666;
+  color: #fff;
+}
+
+/* Upload form */
+
+.uploadForm {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 16px;
+  background: #1a1a1a;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.uploadForm input[type='text'],
+.uploadForm select {
+  padding: 8px 12px;
+  background: #252525;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 13px;
+  outline: none;
+}
+
+.uploadForm input[type='text'] {
+  min-width: 200px;
+}
+
+.uploadForm input[type='file'] {
+  color: #aaa;
+  font-size: 13px;
+}
+
+.uploadForm select option {
+  background: #252525;
+}
+
+.uploadBtn {
+  padding: 8px 18px;
+  background: #fff;
+  color: #111;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.uploadBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.uploadStatus {
+  font-size: 13px;
+  color: #aaa;
+}
+
+/* Tabs */
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #222;
+  padding-bottom: 0;
+}
+
+.tab {
+  padding: 8px 18px;
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 13px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.tab:hover {
+  color: #aaa;
+}
+
+.tabActive {
+  color: #fff;
+  border-bottom-color: #fff;
+}
+
+/* Video grid */
+
+.videoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.videoCard {
+  background: #1a1a1a;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: grab;
+  position: relative;
+  border: 2px solid transparent;
+  transition: border-color 0.15s;
+  user-select: none;
+}
+
+.videoCard:active {
+  cursor: grabbing;
+}
+
+.dragOver {
+  border-color: #fff;
+}
+
+.thumbnail {
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: #252525;
+  overflow: hidden;
+}
+
+.thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.noThumb {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #444;
+  font-size: 13px;
+}
+
+.cardInfo {
+  padding: 8px 10px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cardTitle {
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.status {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statusPENDING   { color: #666; }
+.statusPROCESSING { color: #f5a623; }
+.statusREADY     { color: #4caf50; }
+.statusFAILED    { color: #ff6b6b; }
+
+.deleteBtn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  background: rgba(0, 0, 0, 0.7);
+  border: none;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 11px;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.videoCard:hover .deleteBtn {
+  display: flex;
+}
+
+.deleteBtn:hover {
+  background: rgba(255, 60, 60, 0.85);
+}
+
+.empty {
+  color: #444;
+  font-size: 14px;
+  grid-column: 1 / -1;
+}

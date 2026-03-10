@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: grinya
+  servlet:
+    multipart:
+      max-file-size: 1GB
+      max-request-size: 1GB
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
+  datasource:
+    url: jdbc:h2:file:./data/grinya
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+storage:
+  base-dir: /app/media
+  url-prefix: /media
+
+jwt:
+  secret: ThisIsAVeryLongSecretKeyForJWTSigningPurposesAtLeast256BitsLongEnoughForHS512
+  expiration: 86400000
+
+admin:
+  password: $2y$10$bj2FSlcDAPgPcMvpcNy23OyG7x9MvRnEo9/v/UDGKRivu9WUlsiZe
+
+ffmpeg:
+  path: ffmpeg
+  ffprobe-path: ffprobe
+  temp-dir: /tmp/grinya
