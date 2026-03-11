@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import styles from './Portfolio.module.css'
 
 const videos = [
@@ -26,6 +27,31 @@ const videos = [
     tags: ['Корпоратив', '2023', 'Нижний Новгород'],
   },
 ]
+
+function LazyIframe({ src, title }: { src: string; title: string }) {
+  const [active, setActive] = useState(false)
+
+  if (active) {
+    return (
+      <iframe
+        src={`${src}?autoplay=1`}
+        title={title}
+        allow="clipboard-write; autoplay"
+        allowFullScreen
+      />
+    )
+  }
+
+  return (
+    <button
+      className={styles.playBtn}
+      onClick={() => setActive(true)}
+      aria-label="Воспроизвести"
+    >
+      <span className={styles.playIcon}>▶</span>
+    </button>
+  )
+}
 
 function Portfolio() {
   return (
@@ -59,7 +85,7 @@ function Portfolio() {
         </div>
 
         <div className={styles.right}>
-          <img src="/about.jpeg" alt="Grisha K." className={styles.photo} />
+          <img src="/about.webp" alt="Grisha K." className={styles.photo} decoding="async" />
         </div>
       </section>
 
@@ -70,11 +96,9 @@ function Portfolio() {
             className={`${styles.workRow} ${i % 2 !== 0 ? styles.workRowReverse : ''}`}
           >
             <div className={styles.workVideo}>
-              <iframe
+              <LazyIframe
                 src={`https://rutube.ru/play/embed/${video.embedId}`}
                 title={video.title}
-                allow="clipboard-write; autoplay"
-                allowFullScreen
               />
             </div>
             <div className={styles.workInfo}>

@@ -152,6 +152,32 @@
   color: #aaa;
 }
 
+.resolutionsRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  width: 100%;
+  padding-top: 4px;
+}
+
+.resolutionLabel {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: #ccc;
+  cursor: pointer;
+  user-select: none;
+}
+
+.resolutionLabel input[type='checkbox'] {
+  accent-color: #fff;
+  cursor: pointer;
+  width: 14px;
+  height: 14px;
+}
+
 /* Tabs */
 
 .tabs {

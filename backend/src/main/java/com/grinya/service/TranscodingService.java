@@ -16,8 +16,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 public class TranscodingService {
@@ -40,10 +43,12 @@ public class TranscodingService {
     private String tempDir;
 
     @Async("transcodingExecutor")
-    public void transcodeVideo(Long videoId, String sourceFilePath) {
+    public void transcodeVideo(Long videoId, String sourceFilePath, String targetResolutionsStr) {
         try {
             Video video = videoRepository.findById(videoId)
                     .orElseThrow(() -> new RuntimeException("Video not found"));
+
+            Set<Integer> targetResolutions = parseResolutions(targetResolutionsStr);
 
             logger.info("Starting transcoding for video {}: {}", videoId, video.getTitle());
             video.setStatus(VideoStatus.PROCESSING);
@@ -76,7 +81,7 @@ public class TranscodingService {
             updateProgress(videoId, 40);
 
             // Generate HLS streams
-            generateHLS(videoId, localInputPath, metadata, tempVideoDir);
+            generateHLS(videoId, localInputPath, metadata, tempVideoDir, targetResolutions);
 
             // Update video status — reload to preserve paths saved by sub-steps
             video = videoRepository.findById(videoId).orElseThrow();
@@ -97,6 +102,17 @@ public class TranscodingService {
                 videoRepository.save(video);
             }
         }
+    }
+
+    private Set<Integer> parseResolutions(String resolutionsStr) {
+        if (resolutionsStr == null || resolutionsStr.isBlank()) {
+            return Set.of(360, 480, 720, 1080);
+        }
+        return Arrays.stream(resolutionsStr.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .map(Integer::parseInt)
+                .collect(Collectors.toSet());
     }
 
     private void generateThumbnail(Long videoId, String inputPath, VideoMetadata metadata, String tempDir) throws Exception {
@@ -160,7 +176,7 @@ public class TranscodingService {
         }
     }
 
-    private void generateHLS(Long videoId, String inputPath, VideoMetadata metadata, String tempDir) throws Exception {
+    private void generateHLS(Long videoId, String inputPath, VideoMetadata metadata, String tempDir, Set<Integer> targetResolutions) throws Exception {
         logger.info("Generating HLS streams for video {}", videoId);
 
         String hlsDir = tempDir + File.separator + "hls";
@@ -168,7 +184,9 @@ public class TranscodingService {
 
         // height, audioBitrate, progressAfter
         int[][] streams = {
-            {360,  96,  55},
+            {144,  64,  47},
+            {240,  96,  52},
+            {360,  96,  57},
             {480,  128, 65},
             {720,  128, 75},
             {1080, 192, 85}
@@ -181,6 +199,10 @@ public class TranscodingService {
             int audioBitrate = s[1];
             int progressAfter = s[2];
             String label = height + "p";
+
+            if (!targetResolutions.contains(height)) {
+                continue;
+            }
 
             if (metadata.height > 0 && height > metadata.height) {
                 logger.info("Skipping {}p — source is {}p", height, metadata.height);
@@ -225,12 +247,13 @@ public class TranscodingService {
 
     private void generateMasterPlaylist(Long videoId, String hlsDir, List<String> resolutions) throws Exception {
         // bandwidth and resolution per height
-        java.util.Map<String, String> info = java.util.Map.of(
-                "360p",  "BANDWIDTH=500000,RESOLUTION=640x360",
-                "480p",  "BANDWIDTH=1000000,RESOLUTION=854x480",
-                "720p",  "BANDWIDTH=2500000,RESOLUTION=1280x720",
-                "1080p", "BANDWIDTH=5000000,RESOLUTION=1920x1080"
-        );
+        java.util.Map<String, String> info = new java.util.LinkedHashMap<>();
+        info.put("144p",  "BANDWIDTH=200000,RESOLUTION=256x144");
+        info.put("240p",  "BANDWIDTH=300000,RESOLUTION=426x240");
+        info.put("360p",  "BANDWIDTH=500000,RESOLUTION=640x360");
+        info.put("480p",  "BANDWIDTH=1000000,RESOLUTION=854x480");
+        info.put("720p",  "BANDWIDTH=2500000,RESOLUTION=1280x720");
+        info.put("1080p", "BANDWIDTH=5000000,RESOLUTION=1920x1080");
 
         StringBuilder master = new StringBuilder("#EXTM3U\n#EXT-X-VERSION:3\n");
         for (String res : resolutions) {

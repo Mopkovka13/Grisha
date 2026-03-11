@@ -16,6 +16,7 @@ interface Video {
 }
 
 const CATEGORIES: Category[] = ['WEDDING', 'CORPORATE', 'OTHER']
+const ALL_RESOLUTIONS = [144, 240, 360, 480, 720, 1080]
 const TOKEN_KEY = 'admin_token'
 
 function authHeaders(token: string) {
@@ -88,6 +89,7 @@ function AdminPanel({ token, onLogout }: { token: string; onLogout: () => void }
   const [uploadTitle, setUploadTitle] = useState('')
   const [uploadCategory, setUploadCategory] = useState<Category>('WEDDING')
   const fileRef = useRef<HTMLInputElement>(null)
+  const [selectedResolutions, setSelectedResolutions] = useState<number[]>(ALL_RESOLUTIONS)
   const [draggedId, setDraggedId] = useState<number | null>(null)
   const [dragOverId, setDragOverId] = useState<number | null>(null)
 
@@ -109,15 +111,29 @@ function AdminPanel({ token, onLogout }: { token: string; onLogout: () => void }
     return () => clearInterval(interval)
   }, [])
 
+  function toggleResolution(res: number) {
+    setSelectedResolutions(prev =>
+      prev.includes(res) ? prev.filter(r => r !== res) : [...prev, res]
+    )
+  }
+
+  function toggleAll() {
+    setSelectedResolutions(prev =>
+      prev.length === ALL_RESOLUTIONS.length ? [] : [...ALL_RESOLUTIONS]
+    )
+  }
+
   async function handleUpload(e: React.FormEvent) {
     e.preventDefault()
     const file = fileRef.current?.files?.[0]
     if (!file || !uploadTitle.trim()) return
+    if (selectedResolutions.length === 0) return
 
     const formData = new FormData()
     formData.append('file', file)
     formData.append('title', uploadTitle)
     formData.append('category', uploadCategory)
+    formData.append('resolutions', selectedResolutions.sort((a, b) => a - b).join(','))
 
     setUploading(true)
     setUploadStatus('Загружаем... 0%')
@@ -213,7 +229,27 @@ function AdminPanel({ token, onLogout }: { token: string; onLogout: () => void }
             <option key={c} value={c}>{c}</option>
           ))}
         </select>
-        <button type="submit" disabled={uploading} className={styles.uploadBtn}>
+        <div className={styles.resolutionsRow}>
+          <label className={styles.resolutionLabel}>
+            <input
+              type="checkbox"
+              checked={selectedResolutions.length === ALL_RESOLUTIONS.length}
+              onChange={toggleAll}
+            />
+            Все
+          </label>
+          {ALL_RESOLUTIONS.map(res => (
+            <label key={res} className={styles.resolutionLabel}>
+              <input
+                type="checkbox"
+                checked={selectedResolutions.includes(res)}
+                onChange={() => toggleResolution(res)}
+              />
+              {res}p
+            </label>
+          ))}
+        </div>
+        <button type="submit" disabled={uploading || selectedResolutions.length === 0} className={styles.uploadBtn}>
           {uploading ? 'Загрузка...' : 'Загрузить'}
         </button>
         {uploadStatus && <span className={styles.uploadStatus}>{uploadStatus}</span>}

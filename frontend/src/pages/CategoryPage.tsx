@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import Header from '../components/Header/Header'
 import VideoGrid from '../components/portfolio/VideoGrid'
 import { useVideos } from '../hooks/useVideos'
@@ -12,7 +12,6 @@ const categoryNames: { [key: string]: string } = {
 
 export default function CategoryPage() {
   const { category } = useParams<{ category: string }>()
-  const navigate = useNavigate()
   const { videos, loading, error } = useVideos(category?.toUpperCase())
 
   if (!category || !categoryNames[category.toLowerCase()]) {
@@ -21,9 +20,6 @@ export default function CategoryPage() {
         <Header />
         <div className={styles.container}>
           <h1>Категория не найдена</h1>
-          <button className={styles.homeButton} onClick={() => navigate('/')}>
-            ← На главную
-          </button>
         </div>
       </div>
     )
@@ -36,9 +32,6 @@ export default function CategoryPage() {
       <Header />
       <div className={styles.container}>
         <div className={styles.header}>
-          <button className={styles.backButton} onClick={() => navigate('/')}>
-            ← На главную
-          </button>
           <h1>{displayName}</h1>
         </div>
         <VideoGrid videos={videos} loading={loading} error={error} />

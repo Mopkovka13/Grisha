@@ -25,7 +25,7 @@ function Header() {
   }
 
   return (
-    <header className={`${styles.header} ${scrolled ? styles.scrolled : ''}`}>
+    <header className={`${styles.header} ${(scrolled || isOnCategoryPage) ? styles.scrolled : ''}`}>
       <a href="/" className={styles.logo} onClick={(e) => {
         if (isOnCategoryPage) {
           e.preventDefault()

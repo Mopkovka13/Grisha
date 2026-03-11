@@ -48,6 +48,9 @@ public class Video {
     @Column(nullable = false, columnDefinition = "VARCHAR(20) DEFAULT 'OTHER'")
     private VideoCategory category;
 
+    @Column(columnDefinition = "VARCHAR(50) DEFAULT '360,480,720,1080'")
+    private String targetResolutions;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -187,6 +190,14 @@ public class Video {
 
     public void setCategory(VideoCategory category) {
         this.category = category;
+    }
+
+    public String getTargetResolutions() {
+        return targetResolutions;
+    }
+
+    public void setTargetResolutions(String targetResolutions) {
+        this.targetResolutions = targetResolutions;
     }
 
     public LocalDateTime getCreatedAt() {

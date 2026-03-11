@@ -39,7 +39,8 @@ public class AdminVideoController {
     public ResponseEntity<?> uploadVideo(
             @RequestParam("file") MultipartFile file,
             @RequestParam("title") String title,
-            @RequestParam(value = "category", defaultValue = "OTHER") String categoryStr) {
+            @RequestParam(value = "category", defaultValue = "OTHER") String categoryStr,
+            @RequestParam(value = "resolutions", defaultValue = "360,480,720,1080") String resolutions) {
 
         try {
             VideoCategory category = VideoCategory.valueOf(categoryStr.toUpperCase());
@@ -53,6 +54,7 @@ public class AdminVideoController {
             video.setStatus(VideoStatus.PENDING);
             video.setProgress(0);
             video.setS3Key("pending");
+            video.setTargetResolutions(resolutions);
 
             // Save to database first to get ID
             video = videoRepository.save(video);
@@ -67,7 +69,7 @@ public class AdminVideoController {
             file.transferTo(tempFile);
 
             // Kick off async pipeline (save to storage + transcode) and return immediately
-            transcodingService.transcodeVideo(video.getId(), tempFile.getAbsolutePath());
+            transcodingService.transcodeVideo(video.getId(), tempFile.getAbsolutePath(), resolutions);
 
             return ResponseEntity.ok(toVideoResponse(video));
 
