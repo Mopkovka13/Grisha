@@ -32,6 +32,20 @@ ul {
   list-style: none;
 }
 
+/* Scroll reveal */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.scroll-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 /* SimpleBar thumb */
 .simplebar-scrollbar::before {
   background: rgba(0, 0, 0, 0.25) !important;

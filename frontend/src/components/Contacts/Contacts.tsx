@@ -1,8 +1,8 @@
 import styles from './Contacts.module.css'
 
-function Contacts() {
+function Contacts({ scrollReveal }: { scrollReveal?: boolean }) {
   return (
-    <section id="contacts" className={styles.contacts}>
+    <section id="contacts" className={`${styles.contacts}${scrollReveal ? ' scroll-reveal' : ''}`}>
 
       <p className={styles.label}>Контакты</p>
 

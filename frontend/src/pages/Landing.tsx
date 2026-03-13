@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import SimpleBar from 'simplebar-react'
 import 'simplebar-react/dist/simplebar.min.css'
 import Header from '../components/Header/Header'
@@ -8,14 +9,35 @@ import Contacts from '../components/Contacts/Contacts'
 import styles from '../App.module.css'
 
 function Landing() {
+  useEffect(() => {
+    const scrollEl = document.querySelector('.simplebar-content-wrapper')
+    if (!scrollEl) return
+
+    const observer = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible')
+            observer.unobserve(entry.target)
+          }
+        })
+      },
+      { root: scrollEl, threshold: 0.08 }
+    )
+
+    scrollEl.querySelectorAll('.scroll-reveal').forEach(el => observer.observe(el))
+
+    return () => observer.disconnect()
+  }, [])
+
   return (
     <SimpleBar style={{ height: '100vh' }}>
       <div className={styles.app}>
         <Header />
         <Hero />
-        <Portfolio />
+        <Portfolio scrollReveal />
         <Services />
-        <Contacts />
+        <Contacts scrollReveal />
       </div>
     </SimpleBar>
   )

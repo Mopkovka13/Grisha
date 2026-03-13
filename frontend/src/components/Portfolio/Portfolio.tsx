@@ -89,7 +89,7 @@ function LazyHlsVideo({ video }: { video: VideoResponse }) {
   )
 }
 
-function Portfolio() {
+function Portfolio({ scrollReveal }: { scrollReveal?: boolean }) {
   const [videos, setVideos] = useState<VideoResponse[]>([])
 
   useEffect(() => {
@@ -98,7 +98,7 @@ function Portfolio() {
 
   return (
     <>
-      <section id="portfolio" className={styles.about}>
+      <section id="portfolio" className={`${styles.about}${scrollReveal ? ' scroll-reveal' : ''}`}>
         <div className={styles.left}>
           <p className={styles.subtitle}>КИНЕМАТОГРАФИЧНЫЙ&nbsp;&nbsp;И<br />ЕСТЕСТВЕННЫЙ</p>
 
