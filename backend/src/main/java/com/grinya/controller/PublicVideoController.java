@@ -1,8 +1,8 @@
 package com.grinya.controller;
 
 import com.grinya.dto.VideoResponse;
-import com.grinya.model.VideoCategory;
 import com.grinya.model.VideoStatus;
+import com.grinya.repository.CategoryRepository;
 import com.grinya.repository.VideoRepository;
 import com.grinya.service.StorageService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +21,9 @@ public class PublicVideoController {
     private VideoRepository videoRepository;
 
     @Autowired
+    private CategoryRepository categoryRepository;
+
+    @Autowired
     private StorageService storageService;
 
     @GetMapping
@@ -29,16 +32,15 @@ public class PublicVideoController {
         List<VideoResponse> videos;
 
         if (category != null && !category.isEmpty()) {
-            try {
-                VideoCategory videoCategory = VideoCategory.valueOf(category.toUpperCase());
-                videos = videoRepository
-                        .findByCategoryAndStatusOrderBySortOrder(videoCategory, VideoStatus.READY)
-                        .stream()
-                        .map(this::toVideoResponse)
-                        .collect(Collectors.toList());
-            } catch (IllegalArgumentException e) {
+            String slug = category.toLowerCase();
+            if (!categoryRepository.existsBySlug(slug)) {
                 return ResponseEntity.badRequest().build();
             }
+            videos = videoRepository
+                    .findByCategoryAndStatusOrderBySortOrder(slug, VideoStatus.READY)
+                    .stream()
+                    .map(this::toVideoResponse)
+                    .collect(Collectors.toList());
         } else {
             videos = videoRepository
                     .findByStatusOrderBySortOrder(VideoStatus.READY)

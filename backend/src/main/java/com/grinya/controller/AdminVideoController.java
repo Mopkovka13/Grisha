@@ -3,8 +3,8 @@ package com.grinya.controller;
 import com.grinya.dto.ReorderRequest;
 import com.grinya.dto.VideoResponse;
 import com.grinya.model.Video;
-import com.grinya.model.VideoCategory;
 import com.grinya.model.VideoStatus;
+import com.grinya.repository.CategoryRepository;
 import com.grinya.repository.VideoRepository;
 import com.grinya.service.StorageService;
 import com.grinya.service.TranscodingService;
@@ -30,6 +30,9 @@ public class AdminVideoController {
     private VideoRepository videoRepository;
 
     @Autowired
+    private CategoryRepository categoryRepository;
+
+    @Autowired
     private StorageService storageService;
 
     @Autowired
@@ -43,14 +46,17 @@ public class AdminVideoController {
             @RequestParam(value = "resolutions", defaultValue = "360,480,720,1080") String resolutions) {
 
         try {
-            VideoCategory category = VideoCategory.valueOf(categoryStr.toUpperCase());
+            String categorySlug = categoryStr.toLowerCase();
+            if (!categoryRepository.existsBySlug(categorySlug)) {
+                return ResponseEntity.badRequest().body("Invalid category");
+            }
 
             // Create video entity
             Video video = new Video();
             video.setTitle(title);
             video.setFilename(file.getOriginalFilename());
             video.setFileSize(file.getSize());
-            video.setCategory(category);
+            video.setCategory(categorySlug);
             video.setStatus(VideoStatus.PENDING);
             video.setProgress(0);
             video.setS3Key("pending");
@@ -73,8 +79,6 @@ public class AdminVideoController {
 
             return ResponseEntity.ok(toVideoResponse(video));
 
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body("Invalid category");
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Upload failed: " + e.getMessage());
         }

@@ -44,9 +44,8 @@ public class Video {
     @Column(nullable = false)
     private Integer sortOrder;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, columnDefinition = "VARCHAR(20) DEFAULT 'OTHER'")
-    private VideoCategory category;
+    @Column(nullable = false, columnDefinition = "VARCHAR(50) DEFAULT 'other'")
+    private String category;
 
     @Column(columnDefinition = "VARCHAR(50) DEFAULT '360,480,720,1080'")
     private String targetResolutions;
@@ -57,18 +56,10 @@ public class Video {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
-        if (sortOrder == null) {
-            sortOrder = 0;
-        }
-        if (status == null) {
-            status = VideoStatus.PENDING;
-        }
-        if (category == null) {
-            category = VideoCategory.OTHER;
-        }
-        if (progress == null) {
-            progress = 0;
-        }
+        if (sortOrder == null) sortOrder = 0;
+        if (status == null) status = VideoStatus.PENDING;
+        if (category == null) category = "other";
+        if (progress == null) progress = 0;
     }
 
     // Getters and Setters
@@ -184,11 +175,11 @@ public class Video {
         this.sortOrder = sortOrder;
     }
 
-    public VideoCategory getCategory() {
+    public String getCategory() {
         return category;
     }
 
-    public void setCategory(VideoCategory category) {
+    public void setCategory(String category) {
         this.category = category;
     }
 

@@ -13,7 +13,7 @@ export interface VideoResponse {
   height: number | null
   status: string
   progress: number
-  category: 'WEDDING' | 'CORPORATE' | 'OTHER'
+  category: string
   createdAt: string
 }
 

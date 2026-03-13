@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { useCategories } from '../../hooks/useCategories'
 import styles from './Header.module.css'
 
 function Header() {
@@ -7,6 +8,7 @@ function Header() {
   const location = useLocation()
   const navigate = useNavigate()
   const isOnCategoryPage = location.pathname.startsWith('/portfolio/')
+  const { categories } = useCategories()
 
   useEffect(() => {
     const scroller = document.querySelector('.simplebar-content-wrapper')
@@ -42,24 +44,15 @@ function Header() {
           </a>
           <div className={styles.dropdown}>
             <div className={styles.dropdownInner}>
-              <button
-                className={styles.dropdownLink}
-                onClick={() => handlePortfolioClick('wedding')}
-              >
-                Свадебное видео
-              </button>
-              <button
-                className={styles.dropdownLink}
-                onClick={() => handlePortfolioClick('corporate')}
-              >
-                Корпоративное видео
-              </button>
-              <button
-                className={styles.dropdownLink}
-                onClick={() => handlePortfolioClick('other')}
-              >
-                Другое видео
-              </button>
+              {categories.map(cat => (
+                <button
+                  key={cat.slug}
+                  className={styles.dropdownLink}
+                  onClick={() => handlePortfolioClick(cat.slug)}
+                >
+                  {cat.displayName}
+                </button>
+              ))}
             </div>
           </div>
         </div>
