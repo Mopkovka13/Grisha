@@ -5,17 +5,18 @@ import styles from './VideoCard.module.css'
 
 interface VideoCardProps {
   video: VideoResponse
+  index: number
 }
 
-export default function VideoCard({ video }: VideoCardProps) {
+export default function VideoCard({ video, index }: VideoCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [isPlayingPreview, setIsPlayingPreview] = useState(false)
+  const [previewActive, setPreviewActive] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
 
   const handleMouseEnter = () => {
     if (video.previewPath && videoRef.current) {
       videoRef.current.play()
-      setIsPlayingPreview(true)
+      setPreviewActive(true)
     }
   }
 
@@ -23,8 +24,8 @@ export default function VideoCard({ video }: VideoCardProps) {
     if (videoRef.current) {
       videoRef.current.pause()
       videoRef.current.currentTime = 0
-      setIsPlayingPreview(false)
     }
+    setPreviewActive(false)
   }
 
   return (
@@ -35,27 +36,33 @@ export default function VideoCard({ video }: VideoCardProps) {
         onMouseLeave={handleMouseLeave}
         onClick={() => setIsModalOpen(true)}
       >
-        <img
-          src={video.thumbnailPath || '/placeholder.jpg'}
-          alt={video.title}
-          className={styles.thumbnail}
-          style={{ display: isPlayingPreview ? 'none' : 'block' }}
-        />
-        {video.previewPath && (
-          <video
-            ref={videoRef}
-            src={video.previewPath}
-            className={styles.preview}
-            muted
-            loop
-            playsInline
-            style={{ display: isPlayingPreview ? 'block' : 'none' }}
-          />
-        )}
-        <div className={styles.overlay}>
-          <div className={styles.playButton}>▶</div>
+        <span className={styles.index}>{String(index + 1).padStart(2, '0')}</span>
+
+        <div className={styles.info}>
+          <h3 className={styles.title}>{video.title}</h3>
         </div>
-        <h3 className={styles.title}>{video.title}</h3>
+
+        <div className={styles.thumbWrap}>
+          <img
+            src={video.thumbnailPath || '/placeholder.jpg'}
+            alt={video.title}
+            className={styles.thumbnail}
+            style={{ opacity: previewActive ? 0 : 1 }}
+          />
+          {video.previewPath && (
+            <video
+              ref={videoRef}
+              src={video.previewPath}
+              className={styles.preview}
+              muted
+              loop
+              playsInline
+              style={{ opacity: previewActive ? 1 : 0 }}
+            />
+          )}
+        </div>
+
+        <span className={styles.arrow}>↗</span>
       </div>
 
       {isModalOpen && (

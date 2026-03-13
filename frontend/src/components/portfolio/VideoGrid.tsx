@@ -10,21 +10,21 @@ interface VideoGridProps {
 
 export default function VideoGrid({ videos, loading, error }: VideoGridProps) {
   if (loading) {
-    return <div className={styles.container}>Загрузка видео...</div>
+    return <div className={styles.empty}>Загрузка...</div>
   }
 
   if (error) {
-    return <div className={styles.container}>Ошибка: {error}</div>
+    return <div className={styles.empty}>Ошибка: {error}</div>
   }
 
   if (videos.length === 0) {
-    return <div className={styles.container}>Видео не найдены</div>
+    return <div className={styles.empty}>Видео не найдены</div>
   }
 
   return (
-    <div className={styles.grid}>
-      {videos.map(video => (
-        <VideoCard key={video.id} video={video} />
+    <div className={styles.list}>
+      {videos.map((video, index) => (
+        <VideoCard key={video.id} video={video} index={index} />
       ))}
     </div>
   )
