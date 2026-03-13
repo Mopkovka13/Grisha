@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { useAdminCategories, Category } from '../hooks/useCategories'
+import { serviceApi, ServiceResponse } from '../api/serviceApi'
 import styles from './AdminPage.module.css'
 
 type Status = 'PENDING' | 'PROCESSING' | 'READY' | 'FAILED'
@@ -212,6 +213,8 @@ function AdminPanel({ token, onLogout }: { token: string; onLogout: () => void }
 
       <CategoriesSection token={token} categories={categories} onRefetch={refetchCats} />
 
+      <ServicesSection token={token} />
+
       <ShowcaseSection token={token} videos={videos} onRefetch={fetchVideos} />
 
       <form className={styles.uploadForm} onSubmit={handleUpload}>
@@ -297,6 +300,199 @@ function AdminPanel({ token, onLogout }: { token: string; onLogout: () => void }
         ))}
         {categoryVideos.length === 0 && (
           <p className={styles.empty}>Нет видео в этой категории</p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── Services section ───────────────────────────────────────────────────────
+
+function ServicesSection({ token }: { token: string }) {
+  const headers = { Authorization: `Bearer ${token}` }
+
+  const [services, setServices] = useState<ServiceResponse[]>([])
+  const [draggedId, setDraggedId] = useState<number | null>(null)
+  const [dragOverId, setDragOverId] = useState<number | null>(null)
+
+  // Add form
+  const [showAdd, setShowAdd] = useState(false)
+  const [addTitle, setAddTitle] = useState('')
+  const [addDescription, setAddDescription] = useState('')
+  const [addPrice, setAddPrice] = useState('')
+  const [adding, setAdding] = useState(false)
+
+  // Edit state
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editTitle, setEditTitle] = useState('')
+  const [editDescription, setEditDescription] = useState('')
+  const [editPrice, setEditPrice] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  async function fetchServices() {
+    const data = await serviceApi.getServices()
+    setServices(data)
+  }
+
+  useEffect(() => { fetchServices() }, [])
+
+  async function handleAdd(e: React.FormEvent) {
+    e.preventDefault()
+    if (!addTitle.trim()) return
+    setAdding(true)
+    try {
+      await serviceApi.createService(addTitle, addDescription, addPrice, token)
+      setAddTitle(''); setAddDescription(''); setAddPrice('')
+      setShowAdd(false)
+      fetchServices()
+    } finally {
+      setAdding(false)
+    }
+  }
+
+  function startEdit(s: ServiceResponse) {
+    setEditingId(s.id)
+    setEditTitle(s.title)
+    setEditDescription(s.description ?? '')
+    setEditPrice(s.price ?? '')
+  }
+
+  async function saveEdit(id: number) {
+    setSaving(true)
+    try {
+      await serviceApi.updateService(id, editTitle, editDescription, editPrice, token)
+      setEditingId(null)
+      fetchServices()
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleDelete(id: number) {
+    if (!confirm('Удалить услугу?')) return
+    await serviceApi.deleteService(id, token)
+    fetchServices()
+  }
+
+  async function handleDrop(targetId: number) {
+    if (draggedId === null || draggedId === targetId) {
+      setDraggedId(null); setDragOverId(null); return
+    }
+    const from = services.findIndex(s => s.id === draggedId)
+    const to = services.findIndex(s => s.id === targetId)
+    const reordered = [...services]
+    const [item] = reordered.splice(from, 1)
+    reordered.splice(to, 0, item)
+    setServices(reordered)
+    setDraggedId(null); setDragOverId(null)
+    await axios.put('/api/admin/services/reorder', { orderedIds: reordered.map(s => s.id) }, { headers })
+  }
+
+  return (
+    <div className={styles.categoriesSection}>
+      <div className={styles.catSectionHeader}>
+        <span>Услуги и цены</span>
+        <button className={styles.catAddBtn} onClick={() => { setShowAdd(v => !v) }}>
+          {showAdd ? 'Отмена' : '+ Добавить'}
+        </button>
+      </div>
+
+      {showAdd && (
+        <form className={styles.servicesAddForm} onSubmit={handleAdd}>
+          <input
+            placeholder="Название услуги"
+            value={addTitle}
+            onChange={e => setAddTitle(e.target.value)}
+            required
+          />
+          <textarea
+            placeholder="Описание"
+            value={addDescription}
+            onChange={e => setAddDescription(e.target.value)}
+            rows={2}
+          />
+          <input
+            placeholder="Цена (например: от 50 000 ₽)"
+            value={addPrice}
+            onChange={e => setAddPrice(e.target.value)}
+          />
+          <button type="submit" disabled={adding}>
+            {adding ? 'Создание...' : 'Создать'}
+          </button>
+        </form>
+      )}
+
+      <div className={styles.catList}>
+        {services.map(service => (
+          <div
+            key={service.id}
+            className={`${styles.serviceRow} ${dragOverId === service.id ? styles.catDragOver : ''}`}
+            draggable
+            onDragStart={() => setDraggedId(service.id)}
+            onDragOver={e => { e.preventDefault(); setDragOverId(service.id) }}
+            onDragLeave={() => setDragOverId(null)}
+            onDrop={() => handleDrop(service.id)}
+            onDragEnd={() => { setDraggedId(null); setDragOverId(null) }}
+          >
+            <span className={styles.catHandle}>⠿</span>
+
+            {editingId === service.id ? (
+              <div className={styles.serviceEditForm}>
+                <input
+                  value={editTitle}
+                  onChange={e => setEditTitle(e.target.value)}
+                  placeholder="Название"
+                />
+                <textarea
+                  value={editDescription}
+                  onChange={e => setEditDescription(e.target.value)}
+                  placeholder="Описание"
+                  rows={2}
+                />
+                <input
+                  value={editPrice}
+                  onChange={e => setEditPrice(e.target.value)}
+                  placeholder="Цена"
+                />
+                <div className={styles.serviceEditButtons}>
+                  <button onClick={() => saveEdit(service.id)} disabled={saving} className={styles.catAddBtn}>
+                    {saving ? 'Сохранение...' : 'Сохранить'}
+                  </button>
+                  <button onClick={() => setEditingId(null)} className={styles.catAddBtn}>
+                    Отмена
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className={styles.serviceInfo}>
+                  <span className={styles.catName}>{service.title}</span>
+                  {service.description && (
+                    <span className={styles.serviceDescription}>{service.description}</span>
+                  )}
+                </div>
+                {service.price && (
+                  <span className={styles.servicePrice}>{service.price}</span>
+                )}
+                <button
+                  className={styles.catAddBtn}
+                  onClick={() => startEdit(service)}
+                >
+                  Изменить
+                </button>
+                <button
+                  className={styles.catDelBtn}
+                  onClick={() => handleDelete(service.id)}
+                  title="Удалить"
+                >
+                  ✕
+                </button>
+              </>
+            )}
+          </div>
+        ))}
+        {services.length === 0 && (
+          <p className={styles.empty} style={{ padding: '12px 16px' }}>Нет услуг</p>
         )}
       </div>
     </div>

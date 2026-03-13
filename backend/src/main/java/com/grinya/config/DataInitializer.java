@@ -1,7 +1,9 @@
 package com.grinya.config;
 
 import com.grinya.model.Category;
+import com.grinya.model.Service;
 import com.grinya.repository.CategoryRepository;
+import com.grinya.repository.ServiceRepository;
 import com.grinya.repository.VideoRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +33,9 @@ public class DataInitializer implements ApplicationRunner {
     private VideoRepository videoRepository;
 
     @Autowired
+    private ServiceRepository serviceRepository;
+
+    @Autowired
     private DataSource dataSource;
 
     @Override
@@ -39,6 +44,7 @@ public class DataInitializer implements ApplicationRunner {
         dropLegacyCategoryCheckConstraints();
         seedDefaultCategories();
         migrateLegacyVideoCategories();
+        seedDefaultServices();
     }
 
     // Hibernate created a CHECK constraint for the old VideoCategory enum:
@@ -92,6 +98,26 @@ public class DataInitializer implements ApplicationRunner {
             cat.setSortOrder(99);
             cat.setVisible(false);
             categoryRepository.save(cat);
+        }
+    }
+
+    private void seedDefaultServices() {
+        if (serviceRepository.count() > 0) return;
+
+        Object[][] defaults = {
+            {"Свадебная съёмка",   "Полный день съёмки, монтаж свадебного фильма и короткого ролика для соцсетей. Сохраню самые трогательные моменты вашего дня.",                         "от 50 000 ₽", 0},
+            {"Рекламные ролики",   "Создание рекламных видео для бизнеса: от разработки концепции до финального монтажа и цветокоррекции.",                                                 "от 80 000 ₽", 1},
+            {"Музыкальные клипы",  "Съёмка и постпродакшн музыкальных клипов любой сложности. Работаю с артистами всех жанров.",                                                           "от 100 000 ₽", 2},
+            {"Мероприятия",        "Видеосъёмка конференций, корпоративов, концертов и других мероприятий. Многокамерная съёмка.",                                                          "от 30 000 ₽", 3},
+        };
+
+        for (Object[] row : defaults) {
+            Service s = new Service();
+            s.setTitle((String) row[0]);
+            s.setDescription((String) row[1]);
+            s.setPrice((String) row[2]);
+            s.setSortOrder((Integer) row[3]);
+            serviceRepository.save(s);
         }
     }
 

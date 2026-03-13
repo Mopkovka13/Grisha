@@ -1,74 +1,106 @@
 .services {
-  padding: 100px 48px;
-  min-height: 100vh;
-  background-color: #f5f5f5;
+  background-color: #fff;
+  border-top: 1px solid #ebebeb;
+  padding: 0 0 80px;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: #aaa;
+  padding: 64px 56px 48px;
+}
+
+.list {
+  border-top: 1px solid #ebebeb;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 48px 1fr auto;
+  align-items: baseline;
+  column-gap: 40px;
+  padding: 40px 56px;
+  border-bottom: 1px solid #ebebeb;
+  transition: background 0.15s;
+}
+
+.row:hover {
+  background: #fafafa;
+}
+
+.index {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: #ccc;
+  padding-top: 5px;
+  align-self: start;
+}
+
+.body {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  gap: 16px;
 }
 
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.sectionTitle {
-  font-size: 36px;
-  font-weight: 600;
-  margin-bottom: 48px;
-  letter-spacing: 2px;
+.title {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
   text-transform: uppercase;
+  color: #0a0a0a;
+  line-height: 1.1;
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 32px;
-}
-
-.card {
-  background: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 12px;
-  padding: 32px;
-  transition: border-color 0.3s, transform 0.3s;
-}
-
-.card:hover {
-  border-color: rgba(0, 0, 0, 0.3);
-  transform: translateY(-4px);
-}
-
-.cardTitle {
-  font-size: 22px;
-  font-weight: 600;
-  margin-bottom: 12px;
-}
-
-.cardDescription {
+.description {
   font-size: 15px;
-  line-height: 1.7;
-  color: rgba(0, 0, 0, 0.6);
-  margin-bottom: 20px;
+  line-height: 1.8;
+  color: #666;
+  max-width: 560px;
 }
 
-.cardPrice {
-  font-size: 18px;
-  font-weight: 500;
-  color: #b8860b;
+.price {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #0a0a0a;
+  white-space: nowrap;
+  align-self: start;
+  padding-top: 6px;
 }
 
-@media (max-width: 768px) {
-  .services {
-    padding: 64px 24px;
+@media (max-width: 900px) {
+  .label {
+    padding: 48px 32px 36px;
   }
 
-  .sectionTitle {
-    font-size: 28px;
+  .row {
+    grid-template-columns: 36px 1fr;
+    grid-template-rows: auto auto;
+    padding: 32px 32px;
+    column-gap: 24px;
+    row-gap: 16px;
   }
 
-  .grid {
-    grid-template-columns: 1fr;
-    gap: 24px;
+  .price {
+    grid-column: 2;
+    padding-top: 0;
+  }
+
+  .title {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 480px) {
+  .label {
+    padding: 40px 24px 28px;
+  }
+
+  .row {
+    padding: 28px 24px;
   }
 }
