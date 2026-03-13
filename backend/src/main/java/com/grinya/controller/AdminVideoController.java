@@ -43,7 +43,9 @@ public class AdminVideoController {
             @RequestParam("file") MultipartFile file,
             @RequestParam("title") String title,
             @RequestParam(value = "category", defaultValue = "OTHER") String categoryStr,
-            @RequestParam(value = "resolutions", defaultValue = "360,480,720,1080") String resolutions) {
+            @RequestParam(value = "resolutions", defaultValue = "360,480,720,1080") String resolutions,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) String tags) {
 
         try {
             String categorySlug = categoryStr.toLowerCase();
@@ -61,6 +63,8 @@ public class AdminVideoController {
             video.setProgress(0);
             video.setS3Key("pending");
             video.setTargetResolutions(resolutions);
+            video.setDescription(description);
+            video.setTags(tags);
 
             // Save to database first to get ID
             video = videoRepository.save(video);
@@ -107,11 +111,21 @@ public class AdminVideoController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateVideo(@PathVariable Long id, @RequestParam(required = false) String title) {
+    public ResponseEntity<?> updateVideo(
+            @PathVariable Long id,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) String tags) {
         return videoRepository.findById(id)
                 .map(video -> {
                     if (title != null && !title.isEmpty()) {
                         video.setTitle(title);
+                    }
+                    if (description != null) {
+                        video.setDescription(description);
+                    }
+                    if (tags != null) {
+                        video.setTags(tags);
                     }
                     videoRepository.save(video);
                     return ResponseEntity.ok(toVideoResponse(video));
@@ -177,7 +191,9 @@ public class AdminVideoController {
                 video.getProgress(),
                 video.getCategory(),
                 video.getSortOrder(),
-                video.getCreatedAt()
+                video.getCreatedAt(),
+                video.getDescription(),
+                video.getTags()
         );
     }
 }

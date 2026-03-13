@@ -18,10 +18,13 @@ public class VideoResponse {
     private String category;
     private Integer sortOrder;
     private LocalDateTime createdAt;
+    private String description;
+    private String tags;
 
     public VideoResponse(Long id, String title, String thumbnailPath, String previewPath, String hlsPath,
                          Integer durationSeconds, Integer width, Integer height, VideoStatus status,
-                         Integer progress, String category, Integer sortOrder, LocalDateTime createdAt) {
+                         Integer progress, String category, Integer sortOrder, LocalDateTime createdAt,
+                         String description, String tags) {
         this.id = id;
         this.title = title;
         this.thumbnailPath = thumbnailPath;
@@ -35,6 +38,8 @@ public class VideoResponse {
         this.category = category;
         this.sortOrder = sortOrder;
         this.createdAt = createdAt;
+        this.description = description;
+        this.tags = tags;
     }
 
     public Long getId() { return id; }
@@ -63,4 +68,8 @@ public class VideoResponse {
     public void setSortOrder(Integer sortOrder) { this.sortOrder = sortOrder; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+    public String getTags() { return tags; }
+    public void setTags(String tags) { this.tags = tags; }
 }

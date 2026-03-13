@@ -13,6 +13,8 @@ interface Video {
   progress: number
   category: string
   sortOrder: number
+  description: string | null
+  tags: string | null
 }
 
 const ALL_RESOLUTIONS = [144, 240, 360, 480, 720, 1080]
@@ -85,13 +87,15 @@ function AdminPanel({ token, onLogout }: { token: string; onLogout: () => void }
   const headers = authHeaders(token)
   const { categories, refetch: refetchCats } = useAdminCategories(token)
 
+  const displayCategories = categories.filter(c => c.slug !== 'showcase')
+
   // ── Videos ────────────────────────────────────────────────────────────────
   const [videos, setVideos] = useState<Video[]>([])
   const [activeCategory, setActiveCategory] = useState<string>('')
 
   useEffect(() => {
-    if (categories.length > 0 && !activeCategory) {
-      setActiveCategory(categories[0].slug)
+    if (displayCategories.length > 0 && !activeCategory) {
+      setActiveCategory(displayCategories[0].slug)
     }
   }, [categories])
 
@@ -119,8 +123,8 @@ function AdminPanel({ token, onLogout }: { token: string; onLogout: () => void }
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (categories.length > 0 && !uploadCategory) {
-      setUploadCategory(categories[0].slug)
+    if (displayCategories.length > 0 && !uploadCategory) {
+      setUploadCategory(displayCategories[0].slug)
     }
   }, [categories])
 
@@ -208,6 +212,8 @@ function AdminPanel({ token, onLogout }: { token: string; onLogout: () => void }
 
       <CategoriesSection token={token} categories={categories} onRefetch={refetchCats} />
 
+      <ShowcaseSection token={token} videos={videos} onRefetch={fetchVideos} />
+
       <form className={styles.uploadForm} onSubmit={handleUpload}>
         <input ref={fileRef} type="file" accept="video/*" required />
         <input
@@ -218,7 +224,7 @@ function AdminPanel({ token, onLogout }: { token: string; onLogout: () => void }
           required
         />
         <select value={uploadCategory} onChange={e => setUploadCategory(e.target.value)}>
-          {categories.map(c => (
+          {displayCategories.map(c => (
             <option key={c.slug} value={c.slug}>{c.displayName}</option>
           ))}
         </select>
@@ -249,7 +255,7 @@ function AdminPanel({ token, onLogout }: { token: string; onLogout: () => void }
       </form>
 
       <div className={styles.tabs}>
-        {categories.map(c => (
+        {displayCategories.map(c => (
           <button
             key={c.slug}
             className={`${styles.tab} ${activeCategory === c.slug ? styles.tabActive : ''}`}
@@ -291,6 +297,265 @@ function AdminPanel({ token, onLogout }: { token: string; onLogout: () => void }
         ))}
         {categoryVideos.length === 0 && (
           <p className={styles.empty}>Нет видео в этой категории</p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── Showcase section ───────────────────────────────────────────────────────
+
+function ShowcaseSection({
+  token,
+  videos,
+  onRefetch,
+}: {
+  token: string
+  videos: Video[]
+  onRefetch: () => void
+}) {
+  const headers = authHeaders(token)
+  const showcaseVideos = videos
+    .filter(v => v.category === 'showcase')
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+
+  // Upload state
+  const [uploading, setUploading] = useState(false)
+  const [uploadStatus, setUploadStatus] = useState('')
+  const [uploadTitle, setUploadTitle] = useState('')
+  const [uploadDescription, setUploadDescription] = useState('')
+  const [uploadTags, setUploadTags] = useState('')
+  const [selectedResolutions, setSelectedResolutions] = useState<number[]>(ALL_RESOLUTIONS)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  // Edit state
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editTitle, setEditTitle] = useState('')
+  const [editDescription, setEditDescription] = useState('')
+  const [editTags, setEditTags] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  // Drag state
+  const [draggedId, setDraggedId] = useState<number | null>(null)
+  const [dragOverId, setDragOverId] = useState<number | null>(null)
+
+  function toggleResolution(res: number) {
+    setSelectedResolutions(prev =>
+      prev.includes(res) ? prev.filter(r => r !== res) : [...prev, res]
+    )
+  }
+
+  function toggleAll() {
+    setSelectedResolutions(prev =>
+      prev.length === ALL_RESOLUTIONS.length ? [] : [...ALL_RESOLUTIONS]
+    )
+  }
+
+  async function handleUpload(e: React.FormEvent) {
+    e.preventDefault()
+    const file = fileRef.current?.files?.[0]
+    if (!file || !uploadTitle.trim() || selectedResolutions.length === 0) return
+
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('title', uploadTitle)
+    formData.append('category', 'showcase')
+    formData.append('resolutions', selectedResolutions.sort((a, b) => a - b).join(','))
+    if (uploadDescription.trim()) formData.append('description', uploadDescription.trim())
+    if (uploadTags.trim()) formData.append('tags', uploadTags.trim())
+
+    setUploading(true)
+    setUploadStatus('Загружаем... 0%')
+    try {
+      await axios.post('/api/admin/videos/upload', formData, {
+        headers,
+        onUploadProgress: (e) => {
+          const pct = e.total ? Math.round((e.loaded * 100) / e.total) : 0
+          setUploadStatus(`Загружаем... ${pct}%`)
+        },
+      })
+      setUploadStatus('Загружено — идёт транскодирование')
+      setUploadTitle('')
+      setUploadDescription('')
+      setUploadTags('')
+      if (fileRef.current) fileRef.current.value = ''
+      onRefetch()
+    } catch {
+      setUploadStatus('Ошибка загрузки')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  function startEdit(video: Video) {
+    setEditingId(video.id)
+    setEditTitle(video.title)
+    setEditDescription(video.description ?? '')
+    setEditTags(video.tags ?? '')
+  }
+
+  async function saveEdit(id: number) {
+    setSaving(true)
+    try {
+      await axios.put(`/api/admin/videos/${id}`, {}, {
+        params: { title: editTitle, description: editDescription, tags: editTags },
+        headers,
+      })
+      setEditingId(null)
+      onRefetch()
+    } catch {
+      // keep form open
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleDelete(id: number) {
+    if (!confirm('Удалить видео?')) return
+    await axios.delete(`/api/admin/videos/${id}`, { headers })
+    onRefetch()
+  }
+
+  async function handleDrop(targetId: number) {
+    if (draggedId === null || draggedId === targetId) {
+      setDraggedId(null); setDragOverId(null); return
+    }
+    const from = showcaseVideos.findIndex(v => v.id === draggedId)
+    const to = showcaseVideos.findIndex(v => v.id === targetId)
+    const reordered = [...showcaseVideos]
+    const [item] = reordered.splice(from, 1)
+    reordered.splice(to, 0, item)
+    setDraggedId(null); setDragOverId(null)
+    await axios.put('/api/admin/videos/reorder', { orderedIds: reordered.map(v => v.id) }, { headers })
+    onRefetch()
+  }
+
+  return (
+    <div className={styles.showcaseSection}>
+      <div className={styles.catSectionHeader}>
+        <span>Блок на главной</span>
+      </div>
+
+      <form className={styles.showcaseForm} onSubmit={handleUpload}>
+        <input ref={fileRef} type="file" accept="video/*" required />
+        <input
+          type="text"
+          value={uploadTitle}
+          onChange={e => setUploadTitle(e.target.value)}
+          placeholder="Название"
+          required
+        />
+        <textarea
+          value={uploadDescription}
+          onChange={e => setUploadDescription(e.target.value)}
+          placeholder="Описание"
+          rows={2}
+        />
+        <input
+          type="text"
+          value={uploadTags}
+          onChange={e => setUploadTags(e.target.value)}
+          placeholder="Теги через запятую: Свадьба,2024,Москва"
+        />
+        <div className={styles.resolutionsRow}>
+          <label className={styles.resolutionLabel}>
+            <input
+              type="checkbox"
+              checked={selectedResolutions.length === ALL_RESOLUTIONS.length}
+              onChange={toggleAll}
+            />
+            Все
+          </label>
+          {ALL_RESOLUTIONS.map(res => (
+            <label key={res} className={styles.resolutionLabel}>
+              <input
+                type="checkbox"
+                checked={selectedResolutions.includes(res)}
+                onChange={() => toggleResolution(res)}
+              />
+              {res}p
+            </label>
+          ))}
+        </div>
+        <button type="submit" disabled={uploading || selectedResolutions.length === 0} className={styles.uploadBtn}>
+          {uploading ? 'Загрузка...' : 'Загрузить'}
+        </button>
+        {uploadStatus && <span className={styles.uploadStatus}>{uploadStatus}</span>}
+      </form>
+
+      <div className={styles.showcaseList}>
+        {showcaseVideos.map(video => (
+          <div
+            key={video.id}
+            className={`${styles.showcaseItem} ${dragOverId === video.id ? styles.dragOver : ''}`}
+            draggable
+            onDragStart={() => setDraggedId(video.id)}
+            onDragOver={e => { e.preventDefault(); setDragOverId(video.id) }}
+            onDragLeave={() => setDragOverId(null)}
+            onDrop={() => handleDrop(video.id)}
+            onDragEnd={() => { setDraggedId(null); setDragOverId(null) }}
+          >
+            <div className={styles.thumbnail}>
+              {video.thumbnailPath
+                ? <img src={video.thumbnailPath} alt={video.title} />
+                : <div className={styles.noThumb}>
+                    {video.status === 'PROCESSING' ? `${video.progress}%` : '—'}
+                  </div>
+              }
+            </div>
+            <div className={styles.showcaseItemInfo}>
+              {editingId === video.id ? (
+                <div className={styles.showcaseEditForm}>
+                  <input
+                    type="text"
+                    value={editTitle}
+                    onChange={e => setEditTitle(e.target.value)}
+                    placeholder="Название"
+                  />
+                  <textarea
+                    value={editDescription}
+                    onChange={e => setEditDescription(e.target.value)}
+                    placeholder="Описание"
+                    rows={2}
+                  />
+                  <input
+                    type="text"
+                    value={editTags}
+                    onChange={e => setEditTags(e.target.value)}
+                    placeholder="Теги через запятую"
+                  />
+                  <div className={styles.showcaseEditButtons}>
+                    <button onClick={() => saveEdit(video.id)} disabled={saving} className={styles.uploadBtn}>
+                      {saving ? 'Сохранение...' : 'Сохранить'}
+                    </button>
+                    <button onClick={() => setEditingId(null)} className={styles.logoutBtn}>
+                      Отмена
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <span className={styles.cardTitle}>{video.title}</span>
+                  {video.description && (
+                    <span className={styles.showcaseDescription}>{video.description}</span>
+                  )}
+                  {video.tags && (
+                    <span className={styles.showcaseTags}>{video.tags}</span>
+                  )}
+                  <span className={`${styles.status} ${styles['status' + video.status]}`}>
+                    {video.status === 'PROCESSING' ? `${video.progress}%` : video.status}
+                  </span>
+                  <button className={styles.catAddBtn} onClick={() => startEdit(video)}>
+                    Редактировать
+                  </button>
+                </>
+              )}
+            </div>
+            <button className={styles.deleteBtn} onClick={() => handleDelete(video.id)}>✕</button>
+          </div>
+        ))}
+        {showcaseVideos.length === 0 && (
+          <p className={styles.empty}>Нет видео для главной страницы</p>
         )}
       </div>
     </div>

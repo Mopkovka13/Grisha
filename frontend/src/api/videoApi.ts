@@ -15,6 +15,8 @@ export interface VideoResponse {
   progress: number
   category: string
   createdAt: string
+  description: string | null
+  tags: string | null
 }
 
 const apiClient = axios.create({
@@ -72,11 +74,15 @@ export const videoApi = {
     }).then(() => undefined)
   },
 
-  updateVideo: (id: number, title: string, token: string): Promise<VideoResponse> => {
+  updateVideo: (id: number, title: string, token: string, description?: string, tags?: string): Promise<VideoResponse> => {
     return apiClient.put(`/admin/videos/${id}`, {}, {
-      params: { title },
+      params: { title, description, tags },
       headers: { Authorization: `Bearer ${token}` },
     }).then(res => res.data)
+  },
+
+  getShowcaseVideos: (): Promise<VideoResponse[]> => {
+    return apiClient.get(`/videos`, { params: { category: 'showcase' } }).then(res => res.data)
   },
 
   reorderVideos: (orderedIds: number[], token: string): Promise<void> => {

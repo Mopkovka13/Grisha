@@ -1,59 +1,101 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import HLS from 'hls.js'
 import styles from './Portfolio.module.css'
+import { VideoResponse, videoApi } from '../../api/videoApi'
 
-const videos = [
-  {
-    title: 'Свадебный фильм',
-    embedId: '3ffdc06e551c8a369f1ddac88afdce94',
-    description: 'Этот свадебный фильм — не репортаж, а короткометражная история о двух людях. Мы работали с естественным светом, искали детали, которые обычно остаются незамеченными. Результат — 12 минут, которые хочется пересматривать.',
-    tags: ['Свадьба', '2024', 'Москва'],
-  },
-  {
-    title: 'Рекламный ролик',
-    embedId: 'c7113e61698fd14bbdbe1c5f34c0b718',
-    description: 'Коммерческий проект для локального бренда одежды. Задача — показать продукт через образ, а не через каталог. Съёмка за один день, минимум реквизита, максимум атмосферы.',
-    tags: ['Реклама', '2024', 'Санкт-Петербург'],
-  },
-  {
-    title: 'Музыкальный клип',
-    embedId: 'e499d3cdf5801b09d7a98c709df56f70',
-    description: 'Клип снимался за двое суток в трёх локациях. Художественный образ строился вокруг контраста: холодная архитектура и живое, тёплое движение. Полностью ручная камера, никакого стабилизатора.',
-    tags: ['Клип', '2023', 'Казань'],
-  },
-  {
-    title: 'Корпоративное видео',
-    embedId: '3df696d49bbd60a3daee3c066f0136e6',
-    description: 'Документальный фильм о команде производственной компании. Не корпоративный глянец, а честный взгляд на людей и процессы. Интервью, рабочие моменты, живые эмоции.',
-    tags: ['Корпоратив', '2023', 'Нижний Новгород'],
-  },
-]
-
-function LazyIframe({ src, title }: { src: string; title: string }) {
+function LazyHlsVideo({ video }: { video: VideoResponse }) {
   const [active, setActive] = useState(false)
+  const [hovering, setHovering] = useState(false)
+  const hlsVideoRef = useRef<HTMLVideoElement>(null)
+  const previewRef = useRef<HTMLVideoElement>(null)
+  const hlsRef = useRef<HLS | null>(null)
+
+  useEffect(() => {
+    if (!active || !hlsVideoRef.current || !video.hlsPath) return
+
+    const el = hlsVideoRef.current
+
+    if (HLS.isSupported()) {
+      const hls = new HLS()
+      hlsRef.current = hls
+      hls.loadSource(video.hlsPath)
+      hls.attachMedia(el)
+      hls.on(HLS.Events.MANIFEST_PARSED, () => {
+        el.play()
+      })
+    } else if (el.canPlayType('application/vnd.apple.mpegurl')) {
+      el.src = video.hlsPath
+      el.addEventListener('loadedmetadata', () => el.play())
+    }
+
+    return () => {
+      if (hlsRef.current) {
+        hlsRef.current.destroy()
+        hlsRef.current = null
+      }
+    }
+  }, [active, video.hlsPath])
+
+  function handleMouseEnter() {
+    setHovering(true)
+    if (video.previewPath && previewRef.current) {
+      previewRef.current.play()
+    }
+  }
+
+  function handleMouseLeave() {
+    setHovering(false)
+    if (previewRef.current) {
+      previewRef.current.pause()
+      previewRef.current.currentTime = 0
+    }
+  }
 
   if (active) {
     return (
-      <iframe
-        src={`${src}?autoplay=1`}
-        title={title}
-        allow="clipboard-write; autoplay"
-        allowFullScreen
+      <video
+        ref={hlsVideoRef}
+        poster={video.thumbnailPath ?? undefined}
+        controls
+        playsInline
+        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
       />
     )
   }
+
+  const showPreview = hovering && !!video.previewPath
 
   return (
     <button
       className={styles.playBtn}
       onClick={() => setActive(true)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       aria-label="Воспроизвести"
+      style={!showPreview && video.thumbnailPath ? { backgroundImage: `url(${video.thumbnailPath})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
     >
+      {video.previewPath && (
+        <video
+          ref={previewRef}
+          src={video.previewPath}
+          muted
+          loop
+          playsInline
+          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', display: showPreview ? 'block' : 'none' }}
+        />
+      )}
       <span className={styles.playIcon}>▶</span>
     </button>
   )
 }
 
 function Portfolio() {
+  const [videos, setVideos] = useState<VideoResponse[]>([])
+
+  useEffect(() => {
+    videoApi.getShowcaseVideos().then(setVideos).catch(() => {})
+  }, [])
+
   return (
     <>
       <section id="portfolio" className={styles.about}>
@@ -90,29 +132,33 @@ function Portfolio() {
       </section>
 
       <section className={styles.works}>
-        {videos.map((video, i) => (
-          <div
-            key={video.embedId}
-            className={`${styles.workRow} ${i % 2 !== 0 ? styles.workRowReverse : ''}`}
-          >
-            <div className={styles.workVideo}>
-              <LazyIframe
-                src={`https://rutube.ru/play/embed/${video.embedId}`}
-                title={video.title}
-              />
-            </div>
-            <div className={styles.workInfo}>
-              <p className={styles.workIndex}>0{i + 1}</p>
-              <h3 className={styles.workTitle}>{video.title}</h3>
-              <p className={styles.workDescription}>{video.description}</p>
-              <div className={styles.workTags}>
-                {video.tags.map(tag => (
-                  <span key={tag} className={styles.workTag}>{tag}</span>
-                ))}
+        {videos.map((video, i) => {
+          const tags = video.tags ? video.tags.split(',').map(t => t.trim()).filter(Boolean) : []
+          return (
+            <div
+              key={video.id}
+              className={`${styles.workRow} ${i % 2 !== 0 ? styles.workRowReverse : ''}`}
+            >
+              <div className={styles.workVideo}>
+                <LazyHlsVideo video={video} />
+              </div>
+              <div className={styles.workInfo}>
+                <p className={styles.workIndex}>0{i + 1}</p>
+                <h3 className={styles.workTitle}>{video.title}</h3>
+                {video.description && (
+                  <p className={styles.workDescription}>{video.description}</p>
+                )}
+                {tags.length > 0 && (
+                  <div className={styles.workTags}>
+                    {tags.map(tag => (
+                      <span key={tag} className={styles.workTag}>{tag}</span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </section>
     </>
   )

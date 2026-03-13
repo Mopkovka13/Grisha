@@ -50,6 +50,11 @@ public class Video {
     @Column(columnDefinition = "VARCHAR(50) DEFAULT '360,480,720,1080'")
     private String targetResolutions;
 
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    private String tags;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -189,6 +194,22 @@ public class Video {
 
     public void setTargetResolutions(String targetResolutions) {
         this.targetResolutions = targetResolutions;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getTags() {
+        return tags;
+    }
+
+    public void setTags(String tags) {
+        this.tags = tags;
     }
 
     public LocalDateTime getCreatedAt() {

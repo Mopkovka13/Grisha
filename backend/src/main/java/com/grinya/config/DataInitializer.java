@@ -85,6 +85,14 @@ public class DataInitializer implements ApplicationRunner {
                 categoryRepository.save(cat);
             }
         }
+        if (!categoryRepository.existsBySlug("showcase")) {
+            Category cat = new Category();
+            cat.setSlug("showcase");
+            cat.setDisplayName("Главная страница");
+            cat.setSortOrder(99);
+            cat.setVisible(false);
+            categoryRepository.save(cat);
+        }
     }
 
     // Converts legacy uppercase values (WEDDING → wedding) stored by the old enum

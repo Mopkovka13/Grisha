@@ -74,7 +74,9 @@ public class PublicVideoController {
                 video.getProgress(),
                 video.getCategory(),
                 video.getSortOrder(),
-                video.getCreatedAt()
+                video.getCreatedAt(),
+                video.getDescription(),
+                video.getTags()
         );
     }
 }
