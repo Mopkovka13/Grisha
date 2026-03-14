@@ -25,6 +25,8 @@ backend/build/
 
 # Backend
 backend/src/main/resources/static/
+!backend/src/main/resources/static/about.webp
+!backend/src/main/resources/static/general.mp4
 data/
 /tmp/
 
