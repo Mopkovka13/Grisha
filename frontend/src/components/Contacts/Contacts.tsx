@@ -16,7 +16,7 @@ function Contacts({ scrollReveal }: { scrollReveal?: boolean }) {
           rel="noopener noreferrer"
           className={styles.cta}
         >
-          НАПИСАТЬ В ТЕЛЕГРАМ&nbsp;↗
+          НАПИСАТЬ В МАКС&nbsp;↗
         </a>
       </div>
 
