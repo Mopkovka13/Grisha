@@ -35,7 +35,7 @@ jwt:
   expiration: 86400000
 
 admin:
-  password: $2y$10$bj2FSlcDAPgPcMvpcNy23OyG7x9MvRnEo9/v/UDGKRivu9WUlsiZe
+  password: $2a$10$oHDKGTG6.dFMnm6m1WEiBO01QlJB.0nqCt6iXqILFW1oeesDId4Cm
 
 ffmpeg:
   path: ffmpeg
