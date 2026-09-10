@@ -87,3 +87,10 @@
     letter-spacing: -1px;
   }
 }
+
+/* Clear the fixed bottom navigation bar */
+@media (max-width: 768px) {
+  .container {
+    padding-bottom: calc(48px + 66px + env(safe-area-inset-bottom));
+  }
+}

@@ -166,10 +166,15 @@
   }
 
   .thumbWrap {
-    width: 90px;
+    width: 92px;
   }
 
   .title {
     letter-spacing: -0.5px;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-height: 1.08;
   }
 }

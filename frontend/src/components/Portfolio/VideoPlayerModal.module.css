@@ -136,16 +136,67 @@
 
 @media (max-width: 768px) {
   .content {
-    width: 95%;
-    aspect-ratio: auto;
-    height: 60vh;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    max-height: 62vh;
   }
 
+  .video {
+    border-radius: 6px;
+  }
+
+  /* Controls move to a thumb-reachable row at the bottom */
   .closeButton {
-    width: 36px;
-    height: 36px;
+    position: fixed;
+    top: auto;
+    right: 18px;
+    bottom: calc(20px + env(safe-area-inset-bottom));
+    width: 54px;
+    height: 54px;
     font-size: 20px;
-    top: 10px;
-    right: 10px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .qualityWrapper {
+    position: fixed;
+    top: auto;
+    left: 18px;
+    bottom: calc(20px + env(safe-area-inset-bottom));
+  }
+
+  .qualityBtn {
+    padding: 16px 24px;
+    font-size: 14px;
+    border-radius: 50px;
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .qualityMenu {
+    top: auto;
+    bottom: calc(100% + 8px);
+    left: 0;
+  }
+
+  .info {
+    position: fixed;
+    left: 20px;
+    right: 20px;
+    bottom: calc(92px + env(safe-area-inset-bottom));
+    top: auto;
+    padding: 0;
+    text-align: center;
+  }
+
+  .info h2 {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
   }
 }

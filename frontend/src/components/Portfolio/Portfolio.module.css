@@ -235,6 +235,7 @@
   .workRow,
   .workRowReverse {
     flex-direction: column;
+    padding: 28px 0;
   }
 
   .workVideo,
@@ -245,10 +246,23 @@
   .workVideo {
     aspect-ratio: 16 / 9;
     min-height: unset;
+    margin: 0 20px;
+    width: calc(100% - 40px);
   }
 
   .workInfo {
-    padding: 40px 24px;
+    padding: 28px 20px 8px;
+    gap: 16px;
+  }
+
+  .workTitle {
+    font-size: 26px;
+  }
+
+  .playIcon {
+    width: 54px;
+    height: 54px;
+    font-size: 17px;
   }
 }
 
@@ -265,8 +279,15 @@
     min-height: 320px;
   }
 
+  .photo {
+    inset: 24px;
+    width: auto;
+    height: auto;
+    object-position: center;
+  }
+
   .left {
-    padding: 108px 43px 76px;
+    padding: 84px 40px 72px;
   }
 
   .works {
@@ -281,12 +302,22 @@
 
 @media (max-width: 480px) {
   .left {
-    padding: 86px 27px 65px;
-    gap: 38px;
+    padding: 64px 24px 60px;
+    gap: 36px;
   }
 
   .headingRow {
     flex-direction: column;
     align-items: flex-start;
+    gap: 16px;
+  }
+
+  .description {
+    font-size: 17px;
+    line-height: 1.75;
+  }
+
+  .cta {
+    margin-top: 32px;
   }
 }
