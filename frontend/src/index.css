@@ -28,8 +28,8 @@ body {
 }
 
 /* No `scroll-behavior: smooth` here on purpose: once the document is the
-   scroller (mobile, below) it animates every gesture, not just anchor jumps.
-   Deliberate smooth scrolls pass `behavior: 'smooth'` themselves. */
+   scroller (touch devices, below) it animates every gesture, not just anchor
+   jumps. Deliberate smooth scrolls pass `behavior: 'smooth'` themselves. */
 
 body {
   font-family: 'Space Mono', monospace;
@@ -40,14 +40,20 @@ body {
 }
 
 /*
- * Mobile: hand scrolling back to the document.
+ * Touch devices: hand scrolling back to the document.
  * A scrolling top-level document is the only thing that makes Safari/Chrome
  * collapse their URL bar into the compact strip as you scroll down — an inner
- * scroll container (SimpleBar on desktop) keeps the chrome at full height
+ * scroll container (SimpleBar elsewhere) keeps the chrome at full height
  * forever. Together with viewport-fit=cover this is also what lets the page
  * run edge to edge, up into the notch and down past the home indicator.
+ *
+ * Keyed on the device, not on `max-width`, and must stay in lockstep with
+ * `useIsTouchViewport` — that hook decides whether SimpleBar renders. A phone
+ * in landscape is wider than 768px, so a width query here would re-impose
+ * `overflow: hidden` while JS still expects the document to scroll, leaving
+ * the page frozen.
  */
-@media (max-width: 768px) {
+@media (hover: none) and (pointer: coarse) {
   html,
   body {
     height: auto;

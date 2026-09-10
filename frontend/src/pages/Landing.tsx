@@ -6,13 +6,13 @@ import Portfolio from '../components/Portfolio/Portfolio'
 import Services from '../components/Services/Services'
 import Contacts from '../components/Contacts/Contacts'
 import { useCurveScroll } from '../hooks/useCurveScroll'
-import { useIsMobile } from '../hooks/useIsMobile'
+import { useIsTouchViewport } from '../hooks/useIsTouchViewport'
 import { useCanvasBackground } from '../hooks/useCanvasBackground'
 import { useThemeColor } from '../hooks/useThemeColor'
 import styles from '../App.module.css'
 
 function Landing() {
-  const isMobile = useIsMobile()
+  const isTouch = useIsTouchViewport()
 
   // Dark hero at the top, dark contacts at the bottom — so the notch area and
   // the overscroll at either end stay dark instead of flashing white
@@ -21,9 +21,9 @@ function Landing() {
 
   // Scroll-reveal via IntersectionObserver
   useEffect(() => {
-    // On mobile the document scrolls, which is the observer's default root
-    const scrollEl = isMobile ? null : document.querySelector('.simplebar-content-wrapper')
-    if (!isMobile && !scrollEl) return
+    // On touch the document scrolls, which is the observer's default root
+    const scrollEl = isTouch ? null : document.querySelector('.simplebar-content-wrapper')
+    if (!isTouch && !scrollEl) return
 
     const observer = new IntersectionObserver(
       entries => {
@@ -41,7 +41,7 @@ function Landing() {
     scope.querySelectorAll('.scroll-reveal').forEach(el => observer.observe(el))
 
     return () => observer.disconnect()
-  }, [isMobile])
+  }, [isTouch])
 
   // Smooth curve scroll + snap for Hero & Contacts (desktop only)
   useCurveScroll()

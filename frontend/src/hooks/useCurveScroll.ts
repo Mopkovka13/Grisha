@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { useIsMobile } from './useIsMobile'
+import { useIsTouchViewport } from './useIsTouchViewport'
 
 /**
  * Smooth scroll with curved easing: slow start → gentle acceleration → smooth deceleration.
@@ -8,11 +8,11 @@ import { useIsMobile } from './useIsMobile'
  * Snap-to-section for Hero (top) and Contacts.
  * Works alongside SimpleBar — only intercepts wheel; scrollbar drag stays native.
  *
- * Desktop only: mobile scrolls the document natively, which keeps the touch
- * momentum and lets the browser collapse its URL bar.
+ * Pointer devices only: touch devices scroll the document natively, which
+ * keeps the momentum and lets the browser collapse its URL bar.
  */
 export function useCurveScroll() {
-  const isMobile = useIsMobile()
+  const isTouch = useIsTouchViewport()
   const state = useRef({
     target: 0,
     current: 0,
@@ -25,7 +25,7 @@ export function useCurveScroll() {
   })
 
   useEffect(() => {
-    if (isMobile) return
+    if (isTouch) return
 
     const scrollEl = document.querySelector('.simplebar-content-wrapper') as HTMLElement
     if (!scrollEl) return
@@ -161,5 +161,5 @@ export function useCurveScroll() {
       if (s.rafId) cancelAnimationFrame(s.rafId)
       if (s.snapTimer) clearTimeout(s.snapTimer)
     }
-  }, [isMobile])
+  }, [isTouch])
 }

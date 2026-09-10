@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useCategories } from '../../hooks/useCategories'
-import { useIsMobile } from '../../hooks/useIsMobile'
+import { useIsTouchViewport } from '../../hooks/useIsTouchViewport'
 import { useScrollLock } from '../../hooks/useScrollLock'
 import { getScroller, offsetWithin, scrollEventTarget, viewportHeight } from '../../utils/scroll'
 import styles from './Header.module.css'
@@ -11,7 +11,7 @@ function Header() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
-  const isMobile = useIsMobile()
+  const isTouch = useIsTouchViewport()
   const isOnCategoryPage = location.pathname.startsWith('/portfolio/')
   const onLightBackground = scrolled || isOnCategoryPage
   const { categories } = useCategories()
@@ -27,14 +27,14 @@ function Header() {
     handleScroll()
     target.addEventListener('scroll', handleScroll, { passive: true })
     return () => target.removeEventListener('scroll', handleScroll)
-  }, [location.pathname, isMobile])
+  }, [location.pathname, isTouch])
 
   // Close the mobile sheet whenever the route changes
   useEffect(() => {
     setSheetOpen(false)
   }, [location.pathname])
 
-  useScrollLock(isMobile && sheetOpen)
+  useScrollLock(isTouch && sheetOpen)
 
   const handlePortfolioClick = (category: string) => {
     setSheetOpen(false)
