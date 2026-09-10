@@ -135,10 +135,16 @@
 }
 
 @media (max-width: 768px) {
+  /* Cover the full screen, notch and home indicator included */
+  .modal,
+  .overlay {
+    height: 100dvh;
+  }
+
   .content {
     width: 100%;
     aspect-ratio: 16 / 9;
-    max-height: 62vh;
+    max-height: 62dvh;
   }
 
   .video {
@@ -150,7 +156,7 @@
     position: fixed;
     top: auto;
     right: 18px;
-    bottom: calc(20px + env(safe-area-inset-bottom));
+    bottom: calc(20px + var(--safe-bottom));
     width: 54px;
     height: 54px;
     font-size: 20px;
@@ -165,7 +171,7 @@
     position: fixed;
     top: auto;
     left: 18px;
-    bottom: calc(20px + env(safe-area-inset-bottom));
+    bottom: calc(20px + var(--safe-bottom));
   }
 
   .qualityBtn {
@@ -188,7 +194,7 @@
     position: fixed;
     left: 20px;
     right: 20px;
-    bottom: calc(92px + env(safe-area-inset-bottom));
+    bottom: calc(92px + var(--safe-bottom));
     top: auto;
     padding: 0;
     text-align: center;

@@ -1,11 +1,12 @@
 import { useParams } from 'react-router-dom'
-import SimpleBar from 'simplebar-react'
-import 'simplebar-react/dist/simplebar.min.css'
+import Scroller from '../components/Scroller/Scroller'
 import Header from '../components/Header/Header'
 import VideoGrid from '../components/Portfolio/VideoGrid'
 import { useVideos } from '../hooks/useVideos'
 import { useCategories } from '../hooks/useCategories'
 import { useCurveScroll } from '../hooks/useCurveScroll'
+import { useCanvasBackground } from '../hooks/useCanvasBackground'
+import { useThemeColor } from '../hooks/useThemeColor'
 import styles from './CategoryPage.module.css'
 
 export default function CategoryPage() {
@@ -16,9 +17,14 @@ export default function CategoryPage() {
 
   useCurveScroll()
 
+  // White page top to bottom — keep the notch area, the overscroll and the
+  // browser chrome white too
+  useCanvasBackground('#ffffff')
+  useThemeColor([])
+
   if (!categoriesLoading && (!category || !currentCategory)) {
     return (
-      <SimpleBar style={{ height: '100vh' }}>
+      <Scroller>
         <div className={styles.page}>
           <Header />
           <div className={styles.container}>
@@ -27,12 +33,12 @@ export default function CategoryPage() {
             </div>
           </div>
         </div>
-      </SimpleBar>
+      </Scroller>
     )
   }
 
   return (
-    <SimpleBar style={{ height: '100vh' }}>
+    <Scroller>
       <div className={styles.page}>
         <Header />
         <div className={styles.container}>
@@ -48,6 +54,6 @@ export default function CategoryPage() {
           <VideoGrid videos={videos} loading={loading || categoriesLoading} error={error} />
         </div>
       </div>
-    </SimpleBar>
+    </Scroller>
   )
 }

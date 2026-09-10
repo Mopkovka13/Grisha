@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import HLS from 'hls.js'
 import { VideoResponse } from '../../api/videoApi'
+import { useScrollLock } from '../../hooks/useScrollLock'
 import styles from './VideoPlayerModal.module.css'
 
 interface QualityLevel {
@@ -19,6 +20,8 @@ export default function VideoPlayerModal({ video, onClose }: VideoPlayerModalPro
   const [levels, setLevels] = useState<QualityLevel[]>([])
   const [currentLevel, setCurrentLevel] = useState<number>(-1)
   const [menuOpen, setMenuOpen] = useState(false)
+
+  useScrollLock(true)
 
   useEffect(() => {
     if (!videoRef.current || !video.hlsPath) return

@@ -1,5 +1,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 
+:root {
+  /* Device insets — the notch, the rounded corners, the home indicator.
+     Wrapped in variables so the fallback is written once. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+
+  /* Mobile bottom nav: the bar itself, and the total space it takes up */
+  --bottom-nav-h: 62px;
+  --bottom-nav-space: calc(var(--bottom-nav-h) + var(--safe-bottom));
+}
+
 *,
 *::before,
 *::after {
@@ -12,8 +25,11 @@ html,
 body {
   height: 100%;
   overflow: hidden;
-  scroll-behavior: smooth;
 }
+
+/* No `scroll-behavior: smooth` here on purpose: once the document is the
+   scroller (mobile, below) it animates every gesture, not just anchor jumps.
+   Deliberate smooth scrolls pass `behavior: 'smooth'` themselves. */
 
 body {
   font-family: 'Space Mono', monospace;
@@ -21,6 +37,40 @@ body {
   color: #000;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/*
+ * Mobile: hand scrolling back to the document.
+ * A scrolling top-level document is the only thing that makes Safari/Chrome
+ * collapse their URL bar into the compact strip as you scroll down — an inner
+ * scroll container (SimpleBar on desktop) keeps the chrome at full height
+ * forever. Together with viewport-fit=cover this is also what lets the page
+ * run edge to edge, up into the notch and down past the home indicator.
+ */
+@media (max-width: 768px) {
+  html,
+  body {
+    height: auto;
+    min-height: 100%;
+    overflow: visible;
+  }
+
+  /* Contain sideways overflow with `clip`, never `hidden`: `hidden` here makes
+     the body a scroll container, which kills touch momentum and breaks
+     `position: fixed` children on iOS. `clip` leaves vertical scrolling to
+     propagate to the viewport. */
+  body {
+    overflow-x: clip;
+  }
+
+  /* No inner scroller, so no custom scrollbar to hide the native one behind */
+  html {
+    scrollbar-width: none;
+  }
+
+  body::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 a {

@@ -6,6 +6,14 @@
   overflow: hidden;
 }
 
+/*
+ * `svh` — not `vh` (too tall, clips top and bottom behind the browser chrome)
+ * and not `dvh` (it tracks the collapsing URL bar, so the hero grows *while*
+ * you scroll off it, fighting the gesture). `svh` fills the screen exactly at
+ * rest; the strip the URL bar frees up is taken by the next section, which is
+ * already scrolling in by then.
+ */
+
 .video {
   position: absolute;
   top: 0;

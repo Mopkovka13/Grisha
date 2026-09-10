@@ -274,16 +274,26 @@
     min-height: auto;
   }
 
+  /*
+   * The photo is a 2:3 portrait. Single column here, so give it a portrait
+   * frame and let it fill the full width — a landscape box plus `contain`
+   * shrinks it to a letterboxed sliver in the middle of the screen.
+   */
   .right {
-    height: 60vw;
-    min-height: 320px;
+    height: auto;
+    aspect-ratio: 4 / 5;
+    max-height: 78svh;
   }
 
   .photo {
-    inset: 24px;
-    width: auto;
-    height: auto;
-    object-position: center;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Only the vertical value bites: at 4:5 the 2:3 source overflows in height
+       only. 38% takes most of the crop off the empty wall above his head and
+       keeps the face just above centre. */
+    object-position: center 38%;
   }
 
   .left {

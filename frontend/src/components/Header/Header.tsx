@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useCategories } from '../../hooks/useCategories'
+import { useIsMobile } from '../../hooks/useIsMobile'
+import { useScrollLock } from '../../hooks/useScrollLock'
+import { getScroller, offsetWithin, scrollEventTarget, viewportHeight } from '../../utils/scroll'
 import styles from './Header.module.css'
 
 function Header() {
@@ -8,26 +11,30 @@ function Header() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
+  const isMobile = useIsMobile()
   const isOnCategoryPage = location.pathname.startsWith('/portfolio/')
+  const onLightBackground = scrolled || isOnCategoryPage
   const { categories } = useCategories()
 
   useEffect(() => {
-    const scroller = document.querySelector('.simplebar-content-wrapper')
-    if (!scroller) return
+    const scroller = getScroller()
+    const target = scrollEventTarget(scroller)
 
     const handleScroll = () => {
-      setScrolled(scroller.scrollTop > window.innerHeight * 0.8)
+      setScrolled(scroller.scrollTop > viewportHeight(scroller) * 0.8)
     }
 
     handleScroll()
-    scroller.addEventListener('scroll', handleScroll)
-    return () => scroller.removeEventListener('scroll', handleScroll)
-  }, [location.pathname])
+    target.addEventListener('scroll', handleScroll, { passive: true })
+    return () => target.removeEventListener('scroll', handleScroll)
+  }, [location.pathname, isMobile])
 
   // Close the mobile sheet whenever the route changes
   useEffect(() => {
     setSheetOpen(false)
   }, [location.pathname])
+
+  useScrollLock(isMobile && sheetOpen)
 
   const handlePortfolioClick = (category: string) => {
     setSheetOpen(false)
@@ -36,12 +43,12 @@ function Header() {
 
   const scrollToId = (id: string, attempts = 60) => {
     const el = document.getElementById(id)
-    const scroller = document.querySelector('.simplebar-content-wrapper') as HTMLElement | null
-    if (!el || !scroller) {
+    if (!el) {
       if (attempts > 0) requestAnimationFrame(() => scrollToId(id, attempts - 1))
       return
     }
-    const top = scroller.scrollTop + el.getBoundingClientRect().top - scroller.getBoundingClientRect().top
+    const scroller = getScroller()
+    const top = offsetWithin(el, scroller)
     scroller.scrollTo({ top: Math.max(0, top), behavior: 'smooth' })
   }
 
@@ -57,7 +64,20 @@ function Header() {
 
   return (
     <>
-      <header className={`${styles.header} ${(scrolled || isOnCategoryPage) ? styles.scrolled : ''}`}>
+      {/*
+        Two independent states, deliberately not one class:
+        `scrolled` = light background under the bar (also forced on category
+        pages, where the bar must stay readable at the top of the page), while
+        `hidden` = scrolled far enough that the mobile bar slides away. Folding
+        them together would keep the bar permanently hidden on category pages.
+      */}
+      <header
+        className={[
+          styles.header,
+          onLightBackground ? styles.scrolled : '',
+          scrolled ? styles.hidden : '',
+        ].filter(Boolean).join(' ')}
+      >
         <a href="/" className={styles.logo} onClick={(e) => {
           if (isOnCategoryPage) {
             e.preventDefault()

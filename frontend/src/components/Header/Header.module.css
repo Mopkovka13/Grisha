@@ -177,12 +177,39 @@
 }
 
 @media (max-width: 768px) {
+  /* Reaches up into the notch: the bar covers the status-bar strip while the
+     logo is pushed below it by the top inset */
   .header {
-    padding: calc(14px + env(safe-area-inset-top)) 18px 14px;
+    padding:
+      calc(14px + var(--safe-top))
+      max(18px, var(--safe-right))
+      14px
+      max(18px, var(--safe-left));
     justify-content: center;
+    transition: opacity 0.32s ease, transform 0.32s ease;
   }
 
-  /* Top bar keeps only the logo; navigation moves to the bottom bar */
+  /*
+   * On mobile the bar slides away instead of restyling itself. Keep the text
+   * colour swap (`.scrolled` is what makes the logo readable over the white
+   * category pages) but drop the glass pill, so nothing visibly changes shape
+   * while the bar is on its way out.
+   */
+  .header.scrolled .logo {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .header.hidden {
+    opacity: 0;
+    transform: translateY(-100%);
+    pointer-events: none;
+  }
+
+  /* Top bar keeps only the logo; navigation lives in the bottom bar */
   .nav {
     display: none;
   }
@@ -203,7 +230,11 @@
     align-items: stretch;
     justify-content: space-around;
     gap: 2px;
-    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+    padding:
+      8px
+      max(10px, var(--safe-right))
+      calc(8px + var(--safe-bottom))
+      max(10px, var(--safe-left));
     background: rgba(255, 255, 255, 0.82);
     border-top: 1px solid rgba(0, 0, 0, 0.08);
     box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.08);
@@ -275,7 +306,11 @@
     z-index: 122;
     background: #fff;
     border-radius: 22px 22px 0 0;
-    padding: 10px 22px calc(26px + 62px + env(safe-area-inset-bottom));
+    padding:
+      10px
+      max(22px, var(--safe-right))
+      calc(26px + var(--bottom-nav-space))
+      max(22px, var(--safe-left));
     box-shadow: 0 -16px 48px rgba(0, 0, 0, 0.22);
     transform: translateY(115%);
     transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);
@@ -341,7 +376,11 @@
 
 @media (max-width: 480px) {
   .header {
-    padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
+    padding:
+      calc(12px + var(--safe-top))
+      max(16px, var(--safe-right))
+      12px
+      max(16px, var(--safe-left));
   }
 
   .bottomLabel {
