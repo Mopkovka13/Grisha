@@ -7,6 +7,7 @@ import com.grinya.repository.BlockTextRepository;
 import com.grinya.repository.CategoryRepository;
 import com.grinya.repository.ServiceRepository;
 import com.grinya.repository.VideoRepository;
+import com.grinya.service.ImageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +42,9 @@ public class DataInitializer implements ApplicationRunner {
     private BlockTextRepository blockTextRepository;
 
     @Autowired
+    private ImageService imageService;
+
+    @Autowired
     private DataSource dataSource;
 
     @Override
@@ -51,6 +55,7 @@ public class DataInitializer implements ApplicationRunner {
         migrateLegacyVideoCategories();
         seedDefaultServices();
         seedShowcaseText();
+        imageService.backfillUnoptimised();
     }
 
     // Hibernate created a CHECK constraint for the old VideoCategory enum:
