@@ -10,6 +10,11 @@ services:
     # при падении, но НЕ поднимает его, если он был остановлен вручную.
     restart: unless-stopped
     ports:
+      # Нужен только пока роутер пробрасывает внешний 80 на внутренний 8080.
+      # После переключения проброса на 80->80 замени на "127.0.0.1:8080:8080"
+      # (или убери строку) — снаружи приложение должно быть доступно только
+      # через Caddy, по https. Caddy достаёт его по имени сервиса, публикация
+      # порта ему не нужна.
       - "8080:8080"
     volumes:
       - grinya_data:/app/data
@@ -27,6 +32,26 @@ services:
         reservations:
           memory: 1G
 
+  caddy:
+    image: caddy:2-alpine
+    container_name: grisha-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # caddy_data обязан быть постоянным: в нём лежат сертификаты и ключ
+      # ACME-аккаунта. Потеряется — Caddy пойдёт выпускать заново и упрётся
+      # в лимит Let's Encrypt (5 одинаковых сертификатов в неделю).
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
 volumes:
   grinya_data:
   grinya_media:
+  caddy_data:
+  caddy_config:

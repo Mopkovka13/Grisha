@@ -19,12 +19,19 @@ spring:
     password:
   h2:
     console:
-      enabled: true
+      # ВЫКЛЮЧЕНО намеренно: SecurityConfig заканчивается anyRequest().permitAll(),
+      # поэтому включённая консоль отдаётся публично на /h2-console/ — вход в базу
+      # из интернета с sa и пустым паролем. Для локальной отладки поднимай
+      # профилем/переменной окружения, а не здесь.
+      enabled: false
 
 server:
   port: 8080
   servlet:
     context-path: /
+  # За обратным прокси (Caddy) — иначе Spring считает себя на http
+  # и может редиректить на http, ломая https.
+  forward-headers-strategy: NATIVE
 
 storage:
   base-dir: /app/media
