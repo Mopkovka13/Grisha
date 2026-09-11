@@ -55,6 +55,14 @@ public class Video {
 
     private String tags;
 
+    // DEFAULT 'VIDEO' — existing rows predate this column and are all videos.
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, columnDefinition = "VARCHAR(20) DEFAULT 'VIDEO'")
+    private MediaType mediaType;
+
+    /** Set only for MediaType.IMAGE — the photo itself, at full resolution. */
+    private String imagePath;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -65,6 +73,7 @@ public class Video {
         if (status == null) status = VideoStatus.PENDING;
         if (category == null) category = "other";
         if (progress == null) progress = 0;
+        if (mediaType == null) mediaType = MediaType.VIDEO;
     }
 
     // Getters and Setters
@@ -218,5 +227,21 @@ public class Video {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public MediaType getMediaType() {
+        return mediaType;
+    }
+
+    public void setMediaType(MediaType mediaType) {
+        this.mediaType = mediaType;
+    }
+
+    public String getImagePath() {
+        return imagePath;
+    }
+
+    public void setImagePath(String imagePath) {
+        this.imagePath = imagePath;
     }
 }

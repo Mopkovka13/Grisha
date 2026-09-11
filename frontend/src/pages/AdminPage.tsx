@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { useAdminCategories, Category } from '../hooks/useCategories'
 import { serviceApi, ServiceResponse } from '../api/serviceApi'
+import { blockTextApi } from '../api/blockTextApi'
 import styles from './AdminPage.module.css'
 
 type Status = 'PENDING' | 'PROCESSING' | 'READY' | 'FAILED'
@@ -16,6 +17,9 @@ interface Video {
   sortOrder: number
   description: string | null
   tags: string | null
+  mediaType: 'VIDEO' | 'IMAGE'
+  /** Set only for photos — they have no generated thumbnail */
+  imagePath: string | null
 }
 
 const ALL_RESOLUTIONS = [144, 240, 360, 480, 720, 1080]
@@ -173,6 +177,32 @@ function AdminPanel({ token, onLogout }: { token: string; onLogout: () => void }
     }
   }
 
+  // ── Per-video copy shown on the portfolio page ────────────────────────────
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editTitle, setEditTitle] = useState('')
+  const [editDescription, setEditDescription] = useState('')
+  const [savingEdit, setSavingEdit] = useState(false)
+
+  function startEdit(video: Video) {
+    setEditingId(video.id)
+    setEditTitle(video.title)
+    setEditDescription(video.description ?? '')
+  }
+
+  async function saveEdit(id: number) {
+    setSavingEdit(true)
+    try {
+      await axios.put(`/api/admin/videos/${id}`, {}, {
+        params: { title: editTitle, description: editDescription },
+        headers,
+      })
+      setEditingId(null)
+      fetchVideos()
+    } finally {
+      setSavingEdit(false)
+    }
+  }
+
   // ── Video drag-reorder ────────────────────────────────────────────────────
   const [draggedId, setDraggedId] = useState<number | null>(null)
   const [dragOverId, setDragOverId] = useState<number | null>(null)
@@ -274,7 +304,8 @@ function AdminPanel({ token, onLogout }: { token: string; onLogout: () => void }
           <div
             key={video.id}
             className={`${styles.videoCard} ${dragOverId === video.id ? styles.dragOver : ''}`}
-            draggable
+            // Dragging would swallow text selection inside the edit fields
+            draggable={editingId !== video.id}
             onDragStart={() => setDraggedId(video.id)}
             onDragOver={e => { e.preventDefault(); setDragOverId(video.id) }}
             onDragLeave={() => setDragOverId(null)}
@@ -290,10 +321,47 @@ function AdminPanel({ token, onLogout }: { token: string; onLogout: () => void }
               }
             </div>
             <div className={styles.cardInfo}>
-              <span className={styles.cardTitle}>{video.title}</span>
-              <span className={`${styles.status} ${styles['status' + video.status]}`}>
-                {video.status === 'PROCESSING' ? `${video.progress}%` : video.status}
-              </span>
+              {editingId === video.id ? (
+                <div className={styles.showcaseEditForm}>
+                  <input
+                    type="text"
+                    value={editTitle}
+                    onChange={e => setEditTitle(e.target.value)}
+                    placeholder="Название"
+                  />
+                  <textarea
+                    value={editDescription}
+                    onChange={e => setEditDescription(e.target.value)}
+                    placeholder="Описание — показывается под названием в портфолио"
+                    rows={3}
+                  />
+                  <div className={styles.showcaseEditButtons}>
+                    <button
+                      onClick={() => saveEdit(video.id)}
+                      disabled={savingEdit}
+                      className={styles.uploadBtn}
+                    >
+                      {savingEdit ? 'Сохранение...' : 'Сохранить'}
+                    </button>
+                    <button onClick={() => setEditingId(null)} className={styles.logoutBtn}>
+                      Отмена
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <span className={styles.cardTitle}>{video.title}</span>
+                  {video.description && (
+                    <span className={styles.showcaseDescription}>{video.description}</span>
+                  )}
+                  <span className={`${styles.status} ${styles['status' + video.status]}`}>
+                    {video.status === 'PROCESSING' ? `${video.progress}%` : video.status}
+                  </span>
+                  <button className={styles.catAddBtn} onClick={() => startEdit(video)}>
+                    Редактировать
+                  </button>
+                </>
+              )}
             </div>
             <button className={styles.deleteBtn} onClick={() => handleDeleteVideo(video.id)}>✕</button>
           </div>
@@ -522,6 +590,8 @@ function ShowcaseSection({
   const [uploadDescription, setUploadDescription] = useState('')
   const [uploadTags, setUploadTags] = useState('')
   const [selectedResolutions, setSelectedResolutions] = useState<number[]>(ALL_RESOLUTIONS)
+  // Фото не транскодируется, поэтому выбор разрешений для него не нужен
+  const [isImage, setIsImage] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   // Edit state
@@ -534,6 +604,35 @@ function ShowcaseSection({
   // Drag state
   const [draggedId, setDraggedId] = useState<number | null>(null)
   const [dragOverId, setDragOverId] = useState<number | null>(null)
+
+  // Editable copy shown at the head of the block on the landing page
+  const [textHeading, setTextHeading] = useState('')
+  const [textBody, setTextBody] = useState('')
+  const [textStatus, setTextStatus] = useState('')
+  const [textSaving, setTextSaving] = useState(false)
+
+  useEffect(() => {
+    blockTextApi.get('showcase')
+      .then(t => {
+        setTextHeading(t.heading ?? '')
+        setTextBody(t.body ?? '')
+      })
+      .catch(() => setTextStatus('Не удалось загрузить текст'))
+  }, [])
+
+  async function saveText(e: React.FormEvent) {
+    e.preventDefault()
+    setTextSaving(true)
+    setTextStatus('')
+    try {
+      await blockTextApi.update('showcase', textHeading, textBody, token)
+      setTextStatus('Сохранено')
+    } catch {
+      setTextStatus('Ошибка сохранения')
+    } finally {
+      setTextSaving(false)
+    }
+  }
 
   function toggleResolution(res: number) {
     setSelectedResolutions(prev =>
@@ -550,7 +649,8 @@ function ShowcaseSection({
   async function handleUpload(e: React.FormEvent) {
     e.preventDefault()
     const file = fileRef.current?.files?.[0]
-    if (!file || !uploadTitle.trim() || selectedResolutions.length === 0) return
+    if (!file || !uploadTitle.trim()) return
+    if (!isImage && selectedResolutions.length === 0) return
 
     const formData = new FormData()
     formData.append('file', file)
@@ -570,11 +670,12 @@ function ShowcaseSection({
           setUploadStatus(`Загружаем... ${pct}%`)
         },
       })
-      setUploadStatus('Загружено — идёт транскодирование')
+      setUploadStatus(isImage ? 'Загружено' : 'Загружено — идёт транскодирование')
       setUploadTitle('')
       setUploadDescription('')
       setUploadTags('')
       if (fileRef.current) fileRef.current.value = ''
+      setIsImage(false)
       onRefetch()
     } catch {
       setUploadStatus('Ошибка загрузки')
@@ -632,8 +733,36 @@ function ShowcaseSection({
         <span>Блок на главной</span>
       </div>
 
+      <form className={styles.showcaseForm} onSubmit={saveText}>
+        <textarea
+          value={textHeading}
+          onChange={e => setTextHeading(e.target.value)}
+          placeholder="Заголовок блока"
+          rows={2}
+        />
+        <textarea
+          value={textBody}
+          onChange={e => setTextBody(e.target.value)}
+          placeholder="Текст под заголовком"
+          rows={3}
+        />
+        <button type="submit" disabled={textSaving} className={styles.uploadBtn}>
+          {textSaving ? 'Сохраняем...' : 'Сохранить текст'}
+        </button>
+        {textStatus && <span className={styles.uploadStatus}>{textStatus}</span>}
+      </form>
+
       <form className={styles.showcaseForm} onSubmit={handleUpload}>
-        <input ref={fileRef} type="file" accept="video/*" required />
+        <input
+          ref={fileRef}
+          type="file"
+          accept="video/*,image/*"
+          required
+          onChange={e => {
+            const f = e.target.files?.[0]
+            setIsImage(!!f && f.type.startsWith('image/'))
+          }}
+        />
         <input
           type="text"
           value={uploadTitle}
@@ -653,7 +782,7 @@ function ShowcaseSection({
           onChange={e => setUploadTags(e.target.value)}
           placeholder="Теги через запятую: Свадьба,2024,Москва"
         />
-        <div className={styles.resolutionsRow}>
+        {!isImage && <div className={styles.resolutionsRow}>
           <label className={styles.resolutionLabel}>
             <input
               type="checkbox"
@@ -672,8 +801,12 @@ function ShowcaseSection({
               {res}p
             </label>
           ))}
-        </div>
-        <button type="submit" disabled={uploading || selectedResolutions.length === 0} className={styles.uploadBtn}>
+        </div>}
+        <button
+          type="submit"
+          disabled={uploading || (!isImage && selectedResolutions.length === 0)}
+          className={styles.uploadBtn}
+        >
           {uploading ? 'Загрузка...' : 'Загрузить'}
         </button>
         {uploadStatus && <span className={styles.uploadStatus}>{uploadStatus}</span>}
@@ -692,8 +825,8 @@ function ShowcaseSection({
             onDragEnd={() => { setDraggedId(null); setDragOverId(null) }}
           >
             <div className={styles.thumbnail}>
-              {video.thumbnailPath
-                ? <img src={video.thumbnailPath} alt={video.title} />
+              {(video.thumbnailPath ?? video.imagePath)
+                ? <img src={(video.thumbnailPath ?? video.imagePath)!} alt={video.title} />
                 : <div className={styles.noThumb}>
                     {video.status === 'PROCESSING' ? `${video.progress}%` : '—'}
                   </div>

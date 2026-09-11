@@ -1,7 +1,9 @@
 package com.grinya.config;
 
+import com.grinya.model.BlockText;
 import com.grinya.model.Category;
 import com.grinya.model.Service;
+import com.grinya.repository.BlockTextRepository;
 import com.grinya.repository.CategoryRepository;
 import com.grinya.repository.ServiceRepository;
 import com.grinya.repository.VideoRepository;
@@ -36,6 +38,9 @@ public class DataInitializer implements ApplicationRunner {
     private ServiceRepository serviceRepository;
 
     @Autowired
+    private BlockTextRepository blockTextRepository;
+
+    @Autowired
     private DataSource dataSource;
 
     @Override
@@ -45,6 +50,7 @@ public class DataInitializer implements ApplicationRunner {
         seedDefaultCategories();
         migrateLegacyVideoCategories();
         seedDefaultServices();
+        seedShowcaseText();
     }
 
     // Hibernate created a CHECK constraint for the old VideoCategory enum:
@@ -99,6 +105,19 @@ public class DataInitializer implements ApplicationRunner {
             cat.setVisible(false);
             categoryRepository.save(cat);
         }
+    }
+
+    // Starting copy for the landing gallery, so the block isn't blank before
+    // anyone opens the admin panel. Only seeded when the row is absent — an
+    // edited text is never overwritten.
+    private void seedShowcaseText() {
+        if (blockTextRepository.findBySlug("showcase").isPresent()) return;
+
+        BlockText text = new BlockText();
+        text.setSlug("showcase");
+        text.setHeading("ИЗБРАННЫЕ РАБОТЫ");
+        text.setBody("Кадры из последних съёмок — свадьбы, реклама, клипы, репортаж.");
+        blockTextRepository.save(text);
     }
 
     private void seedDefaultServices() {

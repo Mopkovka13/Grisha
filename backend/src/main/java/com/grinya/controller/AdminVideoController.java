@@ -2,10 +2,12 @@ package com.grinya.controller;
 
 import com.grinya.dto.ReorderRequest;
 import com.grinya.dto.VideoResponse;
+import com.grinya.model.MediaType;
 import com.grinya.model.Video;
 import com.grinya.model.VideoStatus;
 import com.grinya.repository.CategoryRepository;
 import com.grinya.repository.VideoRepository;
+import com.grinya.service.ImageService;
 import com.grinya.service.StorageService;
 import com.grinya.service.TranscodingService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +40,23 @@ public class AdminVideoController {
     @Autowired
     private TranscodingService transcodingService;
 
+    @Autowired
+    private ImageService imageService;
+
+    /**
+     * Content type first, extension as a fallback — some clients send
+     * application/octet-stream for perfectly ordinary photos.
+     */
+    private boolean isImageUpload(MultipartFile file) {
+        String contentType = file.getContentType();
+        if (contentType != null && contentType.toLowerCase().startsWith("image/")) {
+            return true;
+        }
+        String name = file.getOriginalFilename();
+        if (name == null) return false;
+        return name.toLowerCase().matches(".*\\.(jpe?g|png|webp|avif|gif|heic|heif|tiff?|bmp)$");
+    }
+
     @PostMapping("/upload")
     public ResponseEntity<?> uploadVideo(
             @RequestParam("file") MultipartFile file,
@@ -53,12 +72,15 @@ public class AdminVideoController {
                 return ResponseEntity.badRequest().body("Invalid category");
             }
 
-            // Create video entity
+            boolean isImage = isImageUpload(file);
+
+            // Create entity
             Video video = new Video();
             video.setTitle(title);
             video.setFilename(file.getOriginalFilename());
             video.setFileSize(file.getSize());
             video.setCategory(categorySlug);
+            video.setMediaType(isImage ? MediaType.IMAGE : MediaType.VIDEO);
             video.setStatus(VideoStatus.PENDING);
             video.setProgress(0);
             video.setS3Key("pending");
@@ -70,7 +92,8 @@ public class AdminVideoController {
             video = videoRepository.save(video);
 
             // Update s3Key with real path now that we have ID
-            String s3Key = "originals/" + video.getId() + "/" + file.getOriginalFilename();
+            String prefix = isImage ? "images/" : "originals/";
+            String s3Key = prefix + video.getId() + "/" + file.getOriginalFilename();
             video.setS3Key(s3Key);
             video = videoRepository.save(video);
 
@@ -78,8 +101,13 @@ public class AdminVideoController {
             File tempFile = new File(System.getProperty("java.io.tmpdir"), video.getId() + "_" + file.getOriginalFilename());
             file.transferTo(tempFile);
 
-            // Kick off async pipeline (save to storage + transcode) and return immediately
-            transcodingService.transcodeVideo(video.getId(), tempFile.getAbsolutePath(), resolutions);
+            if (isImage) {
+                // Nothing to transcode — store it and return the finished entry
+                video = imageService.storeImage(video.getId(), tempFile.getAbsolutePath());
+            } else {
+                // Kick off async pipeline (save to storage + transcode) and return immediately
+                transcodingService.transcodeVideo(video.getId(), tempFile.getAbsolutePath(), resolutions);
+            }
 
             return ResponseEntity.ok(toVideoResponse(video));
 
@@ -137,8 +165,9 @@ public class AdminVideoController {
     public ResponseEntity<?> deleteVideo(@PathVariable Long id) {
         return videoRepository.findById(id)
                 .map(video -> {
-                    // Delete from S3
-                    String prefix = "originals/" + video.getId() + "/";
+                    // Delete from S3 — photos live under images/, videos under originals/
+                    String prefix = (video.getMediaType() == MediaType.IMAGE ? "images/" : "originals/")
+                            + video.getId() + "/";
                     storageService.deleteDirectory(prefix);
 
                     if (video.getThumbnailPath() != null) {
@@ -193,7 +222,9 @@ public class AdminVideoController {
                 video.getSortOrder(),
                 video.getCreatedAt(),
                 video.getDescription(),
-                video.getTags()
+                video.getTags(),
+                video.getMediaType(),
+                video.getImagePath() != null ? storageService.getPresignedUrl(video.getImagePath()) : null
         );
     }
 }

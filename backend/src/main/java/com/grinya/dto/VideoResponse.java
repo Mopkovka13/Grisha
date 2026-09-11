@@ -1,5 +1,6 @@
 package com.grinya.dto;
 
+import com.grinya.model.MediaType;
 import com.grinya.model.VideoStatus;
 
 import java.time.LocalDateTime;
@@ -20,11 +21,13 @@ public class VideoResponse {
     private LocalDateTime createdAt;
     private String description;
     private String tags;
+    private MediaType mediaType;
+    private String imagePath;
 
     public VideoResponse(Long id, String title, String thumbnailPath, String previewPath, String hlsPath,
                          Integer durationSeconds, Integer width, Integer height, VideoStatus status,
                          Integer progress, String category, Integer sortOrder, LocalDateTime createdAt,
-                         String description, String tags) {
+                         String description, String tags, MediaType mediaType, String imagePath) {
         this.id = id;
         this.title = title;
         this.thumbnailPath = thumbnailPath;
@@ -40,6 +43,8 @@ public class VideoResponse {
         this.createdAt = createdAt;
         this.description = description;
         this.tags = tags;
+        this.mediaType = mediaType;
+        this.imagePath = imagePath;
     }
 
     public Long getId() { return id; }
@@ -72,4 +77,8 @@ public class VideoResponse {
     public void setDescription(String description) { this.description = description; }
     public String getTags() { return tags; }
     public void setTags(String tags) { this.tags = tags; }
+    public MediaType getMediaType() { return mediaType; }
+    public void setMediaType(MediaType mediaType) { this.mediaType = mediaType; }
+    public String getImagePath() { return imagePath; }
+    public void setImagePath(String imagePath) { this.imagePath = imagePath; }
 }

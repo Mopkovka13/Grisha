@@ -76,7 +76,9 @@ public class PublicVideoController {
                 video.getSortOrder(),
                 video.getCreatedAt(),
                 video.getDescription(),
-                video.getTags()
+                video.getTags(),
+                video.getMediaType(),
+                video.getImagePath() != null ? storageService.getPresignedUrl(video.getImagePath()) : null
         );
     }
 }

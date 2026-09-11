@@ -1,7 +1,9 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import HLS from 'hls.js'
 import styles from './Portfolio.module.css'
 import { VideoResponse, videoApi } from '../../api/videoApi'
+import { blockTextApi, BlockText } from '../../api/blockTextApi'
+import { useCarousel } from '../../hooks/useCarousel'
 
 function LazyHlsVideo({ video }: { video: VideoResponse }) {
   const [active, setActive] = useState(false)
@@ -89,11 +91,43 @@ function LazyHlsVideo({ video }: { video: VideoResponse }) {
   )
 }
 
+/**
+ * Placeholder ratio, used only until the real one is known. Neutral on purpose:
+ * the backend can fail to read dimensions (ffprobe missing locally), and a 16:9
+ * guess visibly cropped every photo that wasn't 16:9.
+ */
+const DEFAULT_RATIO = 1.5
+
+function backendRatio(item: VideoResponse): number {
+  if (!item.width || !item.height) return DEFAULT_RATIO
+  return item.width / item.height
+}
+
 function Portfolio({ scrollReveal }: { scrollReveal?: boolean }) {
   const [videos, setVideos] = useState<VideoResponse[]>([])
+  const [text, setText] = useState<BlockText | null>(null)
+  // True ratios, measured from the images themselves once they decode
+  const [ratios, setRatios] = useState<Record<number, number>>({})
+  const stripRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     videoApi.getShowcaseVideos().then(setVideos).catch(() => {})
+    blockTextApi.get('showcase').then(setText).catch(() => {})
+  }, [])
+
+  const { canPrev, canNext, goPrev, goNext } = useCarousel(stripRef, videos.length)
+
+  /**
+   * The browser knows the real proportions the moment the image decodes, so
+   * take them from there rather than trusting the stored width/height — those
+   * are null whenever ffprobe couldn't read the file.
+   */
+  const handleImageLoad = useCallback((id: number, img: HTMLImageElement) => {
+    if (!img.naturalWidth || !img.naturalHeight) return
+    const ratio = img.naturalWidth / img.naturalHeight
+    setRatios(prev =>
+      Math.abs((prev[id] ?? 0) - ratio) < 0.0001 ? prev : { ...prev, [id]: ratio }
+    )
   }, [])
 
   return (
@@ -132,33 +166,63 @@ function Portfolio({ scrollReveal }: { scrollReveal?: boolean }) {
       </section>
 
       <section className={styles.works}>
-        {videos.map((video, i) => {
-          const tags = video.tags ? video.tags.split(',').map(t => t.trim()).filter(Boolean) : []
-          return (
-            <div
-              key={video.id}
-              className={`${styles.workRow} ${i % 2 !== 0 ? styles.workRowReverse : ''}`}
-            >
-              <div className={styles.workVideo}>
-                <LazyHlsVideo video={video} />
-              </div>
-              <div className={styles.workInfo}>
-                <p className={styles.workIndex}>0{i + 1}</p>
-                <h3 className={styles.workTitle}>{video.title}</h3>
-                {video.description && (
-                  <p className={styles.workDescription}>{video.description}</p>
+        <div className={styles.galleryHeader}>
+          <div className={styles.galleryIntro}>
+            {text?.heading && <h2 className={styles.galleryHeading}>{text.heading}</h2>}
+            {text?.body && <p className={styles.galleryBody}>{text.body}</p>}
+          </div>
+        </div>
+
+        <div className={styles.galleryViewport}>
+          {/* Over the photos; hidden on touch, where you swipe instead */}
+          <button
+            type="button"
+            className={`${styles.galleryArrow} ${styles.galleryArrowPrev}`}
+            onClick={goPrev}
+            disabled={!canPrev}
+            aria-label="Назад"
+          >
+            ←
+          </button>
+          <button
+            type="button"
+            className={`${styles.galleryArrow} ${styles.galleryArrowNext}`}
+            onClick={goNext}
+            disabled={!canNext}
+            aria-label="Вперёд"
+          >
+            →
+          </button>
+
+          <div className={styles.galleryStrip} ref={stripRef}>
+            {videos.map(item => (
+              <div
+                key={item.id}
+                className={styles.galleryItem}
+                style={{ '--item-ratio': ratios[item.id] ?? backendRatio(item) } as React.CSSProperties}
+              >
+                {item.mediaType === 'IMAGE' ? (
+                  <img
+                    src={item.imagePath ?? ''}
+                    alt={item.title}
+                    className={[
+                      styles.galleryPhoto,
+                      ratios[item.id] ? styles.galleryPhotoLoaded : '',
+                    ].filter(Boolean).join(' ')}
+                    loading="lazy"
+                    decoding="async"
+                    onLoad={e => handleImageLoad(item.id, e.currentTarget)}
+                    // A cached image can already be complete before React
+                    // attaches onLoad, and then it would never fire
+                    ref={el => { if (el?.complete) handleImageLoad(item.id, el) }}
+                  />
+                ) : (
+                  <LazyHlsVideo video={item} />
                 )}
-                {tags.length > 0 && (
-                  <div className={styles.workTags}>
-                    {tags.map(tag => (
-                      <span key={tag} className={styles.workTag}>{tag}</span>
-                    ))}
-                  </div>
-                )}
               </div>
-            </div>
-          )
-        })}
+            ))}
+          </div>
+        </div>
       </section>
     </>
   )

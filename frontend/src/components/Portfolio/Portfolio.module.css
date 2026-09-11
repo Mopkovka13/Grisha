@@ -96,54 +96,176 @@
   object-position: right center;
 }
 
-/* ── Works grid ── */
+/* ── Works: horizontal gallery ── */
 
 .works {
   background-color: #fff;
   border-top: 1px solid #ebebeb;
+  padding: 64px 0 72px;
 }
 
-.worksTitle {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 4px;
-  text-transform: uppercase;
-  color: #aaa;
-  padding: 64px 56px 48px;
+/* Editable copy at the head of the block (admin: "Блок на главной") */
+.galleryHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 40px;
+  padding: 0 56px 40px;
 }
 
-/* ── Work row ── */
+.galleryIntro {
+  max-width: 820px;
+}
 
-.workRow {
+/* Arrows sit over the strip itself, vertically centred on the photos */
+.galleryViewport {
+  position: relative;
+}
+
+.galleryArrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(20, 20, 20, 0.34);
+  color: #fff;
+  font-size: 19px;
+  font-family: inherit;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  border-top: 1px solid #ebebeb;
-  padding: 40px 0;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: background 0.2s, border-color 0.2s, opacity 0.2s;
 }
 
-.workRowReverse {
-  flex-direction: row-reverse;
+.galleryArrow:hover {
+  background: rgba(20, 20, 20, 0.62);
+  border-color: rgba(255, 255, 255, 0.75);
 }
 
-.workVideo {
-  width: 50%;
-  flex-shrink: 0;
+/* Hidden rather than dimmed — a dead circle sitting on a photo reads as a
+   blemish, not as a disabled control */
+.galleryArrow:disabled {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.galleryArrowPrev {
+  left: 20px;
+}
+
+.galleryArrowNext {
+  right: 20px;
+}
+
+/* Touch swipes the strip, so the arrows would only cover the photos */
+@media (hover: none) and (pointer: coarse) {
+  .galleryArrow {
+    display: none;
+  }
+}
+
+.galleryHeading {
+  font-size: clamp(34px, 4.6vw, 62px);
+  font-weight: 700;
+  line-height: 0.98;
+  letter-spacing: -1.5px;
+  text-transform: uppercase;
+  color: #0a0a0a;
+  margin: 0;
+  white-space: pre-line;
+}
+
+.galleryBody {
+  font-size: 17px;
+  line-height: 1.8;
+  color: #666;
+  margin: 20px 0 0;
+  white-space: pre-line;
+}
+
+/*
+ * The strip. Height is fixed and each item's width comes from its own aspect
+ * ratio, so photos keep their proportions and nothing is ever cropped.
+ * Scrolls natively — touch keeps its own swipe and momentum; pointer devices
+ * step through it with the arrows (useCarousel). The wheel is left alone.
+ */
+.galleryStrip {
+  display: flex;
+  gap: 16px;
+  align-items: stretch;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0 56px;
+  /* Smoothness comes from scrollTo({ behavior: 'smooth' }) in useCarousel, so
+     it applies to the arrows without also animating a swipe. `proximity`, not
+     `mandatory`: with widths this uneven, forcing every swipe to land on an
+     edge fights the gesture. */
+  scroll-snap-type: x proximity;
+  /* Must match the padding above. The snapport ignores padding, so without
+     this `scroll-snap-align: start` puts the first item's snap point at
+     scrollLeft = padding — snap then pulls away from 0 and the carousel can
+     never come back to the first photo. */
+  scroll-padding-inline: 56px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.galleryStrip::-webkit-scrollbar {
+  display: none;
+}
+
+.galleryItem {
   position: relative;
-  aspect-ratio: 16 / 9;
+  flex: 0 0 auto;
+  height: clamp(300px, 56svh, 560px);
+  /* Width follows from the ratio; --item-ratio is set per item from the
+     image's own naturalWidth/naturalHeight (see Portfolio.tsx) */
+  aspect-ratio: var(--item-ratio, 1.5);
   background: #0a0a0a;
   border-radius: 8px;
   overflow: hidden;
-  margin: 0 40px;
+  scroll-snap-align: start;
 }
 
-.workVideo iframe {
+.galleryPhoto {
   position: absolute;
-  top: 0;
-  left: 0;
+  inset: 0;
   width: 100%;
   height: 100%;
-  border: none;
+  object-fit: cover;
   display: block;
+  /* Fades in once decoded instead of popping in — the class is applied when
+     the load handler in Portfolio.tsx records the photo's real ratio */
+  opacity: 0;
+  transform: scale(1.02);
+  transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.galleryPhotoLoaded {
+  opacity: 1;
+  transform: scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .galleryPhoto {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* Restrained hover on pointer devices only */
+@media (hover: hover) and (pointer: fine) {
+  .galleryItem:hover .galleryPhotoLoaded {
+    transform: scale(1.035);
+  }
 }
 
 .playBtn {
@@ -182,81 +304,29 @@
   -webkit-backdrop-filter: blur(4px);
 }
 
-.workInfo {
-  width: 50%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 64px 72px;
-  gap: 24px;
-}
-
-.workIndex {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 4px;
-  color: #ccc;
-}
-
-.workTitle {
-  font-size: 32px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-  text-transform: uppercase;
-  color: #0a0a0a;
-  line-height: 1.1;
-}
-
-.workDescription {
-  font-size: 15px;
-  line-height: 1.8;
-  color: #666;
-  max-width: 480px;
-}
-
-.workTags {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.workTag {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: #999;
-  border: 1px solid #e0e0e0;
-  border-radius: 100px;
-  padding: 5px 14px;
-}
-
 @media (max-width: 768px) {
-  .workRow,
-  .workRowReverse {
-    flex-direction: column;
-    padding: 28px 0;
+  .works {
+    padding: 48px 0 56px;
   }
 
-  .workVideo,
-  .workInfo {
-    width: 100%;
+  .galleryHeader {
+    padding: 0 max(20px, var(--safe-left)) 28px max(20px, var(--safe-left));
   }
 
-  .workVideo {
-    aspect-ratio: 16 / 9;
-    min-height: unset;
-    margin: 0 20px;
-    width: calc(100% - 40px);
+  .galleryBody {
+    font-size: 15px;
+    margin-top: 14px;
   }
 
-  .workInfo {
-    padding: 28px 20px 8px;
-    gap: 16px;
+  /* Side padding on the strip, not the section, so it scrolls edge to edge */
+  .galleryStrip {
+    gap: 12px;
+    padding: 0 max(20px, var(--safe-left));
+    scroll-padding-inline: max(20px, var(--safe-left));
   }
 
-  .workTitle {
-    font-size: 26px;
+  .galleryItem {
+    height: clamp(220px, 42svh, 380px);
   }
 
   .playIcon {
@@ -301,12 +371,16 @@
   }
 
   .works {
-    padding: 64px 32px;
+    padding: 56px 0 64px;
   }
 
-  .grid {
-    grid-template-columns: 1fr;
-    gap: 24px;
+  .galleryHeader {
+    padding: 0 32px 32px;
+  }
+
+  .galleryStrip {
+    padding: 0 32px;
+    scroll-padding-inline: 32px;
   }
 }
 

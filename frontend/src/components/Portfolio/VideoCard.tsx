@@ -40,6 +40,9 @@ export default function VideoCard({ video, index }: VideoCardProps) {
 
         <div className={styles.info}>
           <h3 className={styles.title}>{video.title}</h3>
+          {video.description && (
+            <p className={styles.description}>{video.description}</p>
+          )}
         </div>
 
         <div className={styles.thumbWrap}>

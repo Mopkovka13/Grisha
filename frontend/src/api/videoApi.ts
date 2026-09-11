@@ -2,6 +2,8 @@ import axios from 'axios'
 
 const API_BASE = '/api'
 
+export type MediaType = 'VIDEO' | 'IMAGE'
+
 export interface VideoResponse {
   id: number
   title: string
@@ -17,6 +19,9 @@ export interface VideoResponse {
   createdAt: string
   description: string | null
   tags: string | null
+  mediaType: MediaType
+  /** Set only when mediaType is IMAGE — the photo at full resolution */
+  imagePath: string | null
 }
 
 const apiClient = axios.create({
