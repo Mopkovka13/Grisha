@@ -231,10 +231,14 @@
  * momentum plus snap means the strip gets pulled back toward an edge while
  * you are still scrolling, which reads as stuttering. Pointer devices
  * navigate with the arrows anyway, so they lose nothing by not having it.
+ *
+ * `mandatory` rather than `proximity`: on touch every card is the same width,
+ * so there is no uneven-widths case left for it to fight, and every swipe
+ * should land on a centred card rather than sometimes stopping between two.
  */
 @media (hover: none) and (pointer: coarse) {
   .galleryStrip {
-    scroll-snap-type: x proximity;
+    scroll-snap-type: x mandatory;
   }
 }
 
@@ -335,26 +339,33 @@
     margin-top: 14px;
   }
 
-  /* Side padding on the strip, not the section, so it scrolls edge to edge */
+  /*
+   * Centred carousel with the neighbours peeking in.
+   *
+   * The card width and the strip padding are one decision, not two: with
+   * padding equal to the peek and the card filling what is left, a centred
+   * snap puts the first card at scrollLeft 0 exactly and the last at the
+   * maximum. Get them out of step and the end cards can never centre.
+   *
+   * The peek has to clear the gap — the neighbour only becomes visible past
+   * it — and scales with the screen, so a small phone gives up less width
+   * than a large one.
+   */
   .galleryStrip {
-    --strip-pad: max(20px, var(--safe-left));
-    gap: 12px;
-    padding: 0 var(--strip-pad);
-    scroll-padding-inline: var(--strip-pad);
+    --gap: 12px;
+    --peek: max(calc(var(--gap) + 20px), calc(9vw + var(--safe-left)));
+    gap: var(--gap);
+    padding-inline: var(--peek);
+    scroll-padding-inline: var(--peek);
   }
 
-  /*
-   * Keep a comfortable height and cap the width instead, so one swipe is one
-   * photo. Anything wider than the screen is cropped by object-fit — at this
-   * height that is every landscape photo, not only the panoramas.
-   *
-   * Deriving the height from the widest photo instead would avoid cropping
-   * altogether, but a single panorama would then squash the whole strip to
-   * about 150px and leave the narrower photos tiny.
-   */
   .galleryItem {
+    /* Explicit width and height together override the aspect-ratio above:
+       uniform cards, with object-fit doing the cropping */
+    width: calc(100vw - 2 * var(--peek));
+    max-width: none;
     height: clamp(220px, 42svh, 380px);
-    max-width: calc(100vw - 2 * var(--strip-pad));
+    scroll-snap-align: center;
   }
 
   .playIcon {
