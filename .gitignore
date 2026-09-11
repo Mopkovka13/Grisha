@@ -29,6 +29,9 @@ backend/src/main/resources/static/*
 !backend/src/main/resources/static/general.mp4
 !backend/src/main/resources/static/placeholder.jpg
 data/
+# Uploaded photos and transcoded video — runtime data, lives in a Docker
+# volume in production and under STORAGE_BASE_DIR locally
+media/
 /tmp/
 
 # Secrets
