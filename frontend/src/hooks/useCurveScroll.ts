@@ -114,6 +114,15 @@ export function useCurveScroll() {
     }
 
     const handleWheel = (e: WheelEvent) => {
+      /*
+       * Leave predominantly horizontal gestures alone. This listener sits on
+       * the page's scroll container, so every wheel event from inside bubbles
+       * up here — and preventDefault cancels the browser's native scrolling
+       * outright, including the sideways two-finger scrolling of the showcase
+       * carousel nested within. Only vertical gestures belong to the page.
+       */
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return
+
       e.preventDefault()
 
       const now = Date.now()

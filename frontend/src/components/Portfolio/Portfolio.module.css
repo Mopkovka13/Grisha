@@ -203,22 +203,39 @@
   overflow-x: auto;
   overflow-y: hidden;
   padding: 0 56px;
-  /* Smoothness comes from scrollTo({ behavior: 'smooth' }) in useCarousel, so
-     it applies to the arrows without also animating a swipe. `proximity`, not
-     `mandatory`: with widths this uneven, forcing every swipe to land on an
-     edge fights the gesture. */
-  scroll-snap-type: x proximity;
   /* Must match the padding above. The snapport ignores padding, so without
      this `scroll-snap-align: start` puts the first item's snap point at
      scrollLeft = padding — snap then pulls away from 0 and the carousel can
      never come back to the first photo. */
   scroll-padding-inline: 56px;
+  /*
+   * `none`, not `contain`. Both stop the overscroll from chaining to
+   * ancestors, but only `none` also suppresses the local overscroll effect —
+   * and on macOS that effect is the back/forward navigation gesture. It shows
+   * up asymmetrically: swiping back past the first photo has somewhere to go
+   * in the history, so the browser grabs the gesture and scrolling feels
+   * stuck, while the same overscroll forward usually has no entry to go to
+   * and passes unnoticed.
+   */
+  overscroll-behavior-x: none;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
 
 .galleryStrip::-webkit-scrollbar {
   display: none;
+}
+
+/*
+ * Snap is for the touch swipe only. On a trackpad it fights the gesture —
+ * momentum plus snap means the strip gets pulled back toward an edge while
+ * you are still scrolling, which reads as stuttering. Pointer devices
+ * navigate with the arrows anyway, so they lose nothing by not having it.
+ */
+@media (hover: none) and (pointer: coarse) {
+  .galleryStrip {
+    scroll-snap-type: x proximity;
+  }
 }
 
 .galleryItem {
@@ -320,13 +337,24 @@
 
   /* Side padding on the strip, not the section, so it scrolls edge to edge */
   .galleryStrip {
+    --strip-pad: max(20px, var(--safe-left));
     gap: 12px;
-    padding: 0 max(20px, var(--safe-left));
-    scroll-padding-inline: max(20px, var(--safe-left));
+    padding: 0 var(--strip-pad);
+    scroll-padding-inline: var(--strip-pad);
   }
 
+  /*
+   * Keep a comfortable height and cap the width instead, so one swipe is one
+   * photo. Anything wider than the screen is cropped by object-fit — at this
+   * height that is every landscape photo, not only the panoramas.
+   *
+   * Deriving the height from the widest photo instead would avoid cropping
+   * altogether, but a single panorama would then squash the whole strip to
+   * about 150px and leave the narrower photos tiny.
+   */
   .galleryItem {
     height: clamp(220px, 42svh, 380px);
+    max-width: calc(100vw - 2 * var(--strip-pad));
   }
 
   .playIcon {
